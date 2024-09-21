@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://b7d8luhry7thy"
+
+[deps]
+
+files=["res://gdScripts/pokeSim/data/items_gen4.item.translation", "res://gdScripts/pokeSim/data/items_gen4.bag.translation"]
+
+source_file="res://gdScripts/pokeSim/data/items_gen4.csv"
+dest_files=["res://gdScripts/pokeSim/data/items_gen4.item.translation", "res://gdScripts/pokeSim/data/items_gen4.bag.translation"]
+
+[params]
+
+compress=true
+delimiter=0

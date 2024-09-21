@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dgqg4xv8g47ul"
+
+[deps]
+
+files=["res://gdScripts/pokeSim/data/abilities.ability.translation", "res://gdScripts/pokeSim/data/abilities.gen.translation"]
+
+source_file="res://gdScripts/pokeSim/data/abilities.csv"
+dest_files=["res://gdScripts/pokeSim/data/abilities.ability.translation", "res://gdScripts/pokeSim/data/abilities.gen.translation"]
+
+[params]
+
+compress=true
+delimiter=0

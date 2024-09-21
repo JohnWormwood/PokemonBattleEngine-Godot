@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://do0eaenxbqca7"
+
+[deps]
+
+files=["res://gdScripts/pokeSim/data/move_list.identifier.translation", "res://gdScripts/pokeSim/data/move_list.generation.translation", "res://gdScripts/pokeSim/data/move_list.type.translation", "res://gdScripts/pokeSim/data/move_list.power.translation", "res://gdScripts/pokeSim/data/move_list.pp.translation", "res://gdScripts/pokeSim/data/move_list.accuracy.translation", "res://gdScripts/pokeSim/data/move_list.priority.translation", "res://gdScripts/pokeSim/data/move_list.target.translation", "res://gdScripts/pokeSim/data/move_list.move.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation"]
+
+source_file="res://gdScripts/pokeSim/data/move_list.csv"
+dest_files=["res://gdScripts/pokeSim/data/move_list.identifier.translation", "res://gdScripts/pokeSim/data/move_list.generation.translation", "res://gdScripts/pokeSim/data/move_list.type.translation", "res://gdScripts/pokeSim/data/move_list.power.translation", "res://gdScripts/pokeSim/data/move_list.pp.translation", "res://gdScripts/pokeSim/data/move_list.accuracy.translation", "res://gdScripts/pokeSim/data/move_list.priority.translation", "res://gdScripts/pokeSim/data/move_list.target.translation", "res://gdScripts/pokeSim/data/move_list.move.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation", "res://gdScripts/pokeSim/data/move_list.effect.translation"]
+
+[params]
+
+compress=true
+delimiter=0
