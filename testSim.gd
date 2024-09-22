@@ -11,7 +11,7 @@ func main():
 	var pikachu = Pokemon.new(
 		"pikachu",
 		50,
-		["thunderbolt", "quick-attack", "iron-tail", "tackle"],
+		["thunder", "quick-attack", "iron-tail", "tackle"],
 		"male",
 		"jolly",
 		[120, 90, 55, 50, 50, 100]
@@ -36,13 +36,13 @@ func main():
 	battle.start()
 	
 	# Parámetros de ejemplo para el turno
-	var t1_action = ['move', 'thunderbolt']    # Acción de Ash
+	var t1_action = ['move', 'thunder']    # Acción de Ash
 	var t2_action = ['move', 'tackle']      # Acción de Misty
 	
 	# Procesar el turno con los parámetros fijos
 	var turn_result = battle.turn(t1_action, t2_action)
 	
-	#t1_action = ['move', 'thunderbolt']
+	#t1_action = ['move', 'thunder']
 	#t2_action = ['move', 'surf'] 
 	#turn_result = battle.turn(t1_action, t2_action)
 	#

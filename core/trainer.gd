@@ -71,7 +71,7 @@ class Trainer:
 
 		self.selection = selection
 
-		self.name = name
+		self.name = _name
 		self.in_battle = false
 
 	func start(battle):

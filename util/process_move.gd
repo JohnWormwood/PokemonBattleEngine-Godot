@@ -45,7 +45,7 @@ static func _calculate_type_ef(defender, move_data):
 
 
 static func _calculate_random_multiplier_damage() -> float:
-	return randi_range(85, 101) / 100
+	return randf_range(85, 101) / 100
 
 static func _calculate_damage(
 	attacker: Pokemon,
@@ -58,7 +58,7 @@ static func _calculate_damage(
 	skip_fc: bool = false,
 	skip_dmg: bool = false,
 	skip_txt: bool = false,
-	fix_damage: int = 0
+	fix_damage: Variant = null
 ) -> int:
 	if battle.winner or move_data.category == gs.STATUS:
 		return 0
@@ -110,7 +110,7 @@ static func _calculate_damage(
 			def_ig = min(defender.stats_actual[d_stat], defender.stats_effective[d_stat])
 			atk_ig = max(attacker.stats_actual[a_stat], attacker.stats_effective[a_stat])
 
-		var attack_defense_ratio = atk_ig / def_ig
+		var attack_defense_ratio = float(atk_ig) / def_ig
 		var burn_multiplier = 0.5 if attacker.nv_status == gs.BURNED and move_data.category == gs.PHYSICAL and not attacker.has_ability("guts") else 1
 
 		if attacker.charged and move_data.type == "electric":
@@ -168,7 +168,7 @@ static func _calculate_damage(
 		defender.stat_stages[gs.ATK] = 6
 	
 	pi.post_damage_items(attacker, battle, damage_done)
-	print("Daño:  ",damage_done)
+	print("Damage:  ",damage_done)
 	return damage_done
 
 static func _calculate_hit_or_miss(

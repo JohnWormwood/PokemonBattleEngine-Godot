@@ -144,7 +144,7 @@ static func get_single_move(move: String):
 static func get_type_ef(move_type: String, def_type: String) -> float:
 	if not _type_to_id.has(move_type) or not _type_to_id.has(def_type):
 		return 1.0
-	print(move_type," vs ",def_type,_type_effectives[_type_to_id[move_type]][_type_to_id[def_type]])
+	#print(move_type," vs ",def_type,_type_effectives[_type_to_id[move_type]][_type_to_id[def_type]])
 	return _type_effectives[_type_to_id[move_type]][_type_to_id[def_type]]
 
 static func get_all_types() -> Array:
