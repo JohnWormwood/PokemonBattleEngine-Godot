@@ -58,18 +58,23 @@ class Trainer:
 			push_error("Intento de crear un entrenador sin nombre.")
 			return
 		
-		if _selection and typeof(_selection) != TYPE_OBJECT:
+		if _selection and not call(selection):
 			push_error("Intento de crear un entrenador con una función de selección inválida.")
 			return
 		
-		name = _name
 		poke_list = _poke_list
-		selection = _selection
 		for poke in self.poke_list:
-			poke.trainer = self
+			if poke.trainer == null:
+				poke.trainer = self
+			else:
+				push_error("Attempted to create Trainer with duplicate Pokemon")
+
+		self.selection = selection
+
+		self.name = name
 		self.in_battle = false
 
-	func start_pokemon(battle):
+	func start(battle):
 		for poke in self.poke_list:
 			poke.start_battle(battle)
 		self.current_poke = self.poke_list[0]
@@ -90,7 +95,7 @@ class Trainer:
 		self.num_fainted = 0
 		self.wish_poke = null
 		self.imprisoned_poke = null
-		self.in_battle = false
+		self.in_battle = true
 		self.has_moved = false
 
 	func is_valid_action(action: Array) -> bool:
@@ -109,9 +114,11 @@ class Trainer:
 		return false
 
 	func can_switch_out() -> bool:
+		self._must_be_in_battle()
 		return self.current_poke.can_switch_out()
 
 	func can_use_item(item_action: Array) -> bool:
+		self._must_be_in_battle()
 		if not item_action or typeof(item_action[gs.ACTION_TYPE]) != TYPE_STRING or item_action[gs.ACTION_TYPE] != "item":
 			return false
 		
@@ -131,3 +138,7 @@ class Trainer:
 				if move_action[gs.ACTION_VALUE] == move.name:
 					return true
 		return false
+
+	func _must_be_in_battle():
+		if not self.in_battle:
+			push_error("Trainer must be in battle")

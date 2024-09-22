@@ -63,10 +63,10 @@ func update():
 			self.cur_battle.add_text("The twisted dimensions returned to normal!")
 
 # Cambia el clima en el campo de batalla
-func change_weather(weather: int):
+func change_weather(weather: String):
 	if self.weather != weather:
 		self.weather = weather
-		pa.weather_change_abilities(self.cur_battle, self)
+		pa.weather_change_abilities(self.cur_battle,self)
 
 # Procesa los efectos del clima sobre el Pokémon
 func process_weather_effects(poke: Pokemon):
@@ -94,3 +94,6 @@ func process_weather_effects(poke: Pokemon):
 	if self.weather == gs.HARSH_SUNLIGHT and self.poke.has_ability("dry-skin"):
 		self.cur_battle.add_text(self.poke.nickname + " was hurt by its Dry Skin!")
 		self.poke.take_damage(max(1, self.poke.max_hp / 8))#TODO div entero
+
+func get_terrain():
+		return self._terrain

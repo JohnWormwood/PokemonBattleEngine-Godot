@@ -43,6 +43,10 @@ static func _calculate_type_ef(defender, move_data):
 		t_mult = t_mult * PokeSim.get_type_ef(move_data.type, defender.types[1])
 	return t_mult
 
+
+static func _calculate_random_multiplier_damage() -> float:
+	return randi_range(85, 101) / 100
+
 static func _calculate_damage(
 	attacker: Pokemon,
 	defender: Pokemon,
@@ -53,13 +57,19 @@ static func _calculate_damage(
 	inv_bypass: bool = false,
 	skip_fc: bool = false,
 	skip_dmg: bool = false,
-	skip_txt: bool = false
+	skip_txt: bool = false,
+	fix_damage: int = 0
 ) -> int:
 	if battle.winner or move_data.category == gs.STATUS:
 		return 0
 	if not defender.is_alive:
 		_missed(attacker, battle)
 		return 0
+	if _protect_check(defender, battle, move_data):
+		return 0
+	if fix_damage == null and not move_data.power:
+		return 0
+
 	if not inv_bypass and _invulnerability_check(
 		attacker, defender, battlefield, battle, move_data
 	):
@@ -67,94 +77,93 @@ static func _calculate_damage(
 	if not move_data.power:
 		return 0
 	
-	var t_mult = _calculate_type_ef(defender, move_data)
-	if not skip_txt and (not t_mult or (t_mult < 2 and defender.has_ability("wonder-guard"))):
-		battle.add_text("It doesn't affect " + defender.nickname)
+	var type_multiplier = _calculate_type_ef(defender, move_data)
+
+	if not skip_txt and (type_multiplier == 0 or (type_multiplier < 2 and defender.has_ability("wonder-guard"))):
+		_not_affected(battle, defender)
 		return 0
-	
-	if pa.type_protection_abilities(defender, move_data, battle):
-		return 0
+	if fix_damage == null:
+		if pa.type_protection_abilities(defender, move_data, battle):
+			return 0
 
-	var cc = (crit_chance if crit_chance else 0) + attacker.crit_stage
-	if attacker.has_ability("super-luck"):
-		cc += 1
-	if attacker.item == "scope-lens" or attacker.item == "razor-claw":
-		cc += 1
-	elif attacker.item == "lucky-punch" and attacker.name == "chansey":
-		cc += 2
-	
-	var crit_mult = 1
-	if not defender.trainer.lucky_chant and not defender.has_ability("battle-armor") and not defender.has_ability("shell-armor") and _calculate_crit(cc):
-		crit_mult = 2 if not attacker.has_ability("sniper") else 3
-		battle.add_text("A critical hit!")
-	
-	if not skip_txt and t_mult < 1:
-		battle.add_text("It's not very effective...")
-	elif not skip_txt and t_mult > 1:
-		battle.add_text(move_data.name+" It's super effective!")
+	var critical_multiplier = _calculate_critical_multiplier(attacker, defender, battle, crit_chance)
 
-	var ignore_stats=defender.has_ability("unaware")
-	attacker.calculate_stats_effective(ignore_stats)
-	ignore_stats=attacker.has_ability("unaware")
-	defender.calculate_stats_effective(ignore_stats)
+	var damage
+	if not skip_txt:
+		if type_multiplier < 1:
+			battle.add_text("It's not very effective...") 
+		elif type_multiplier > 1:
+			battle.add_text("It's super effective!")
 
-	var a_stat = gs.ATK if move_data.category == gs.PHYSICAL else gs.SP_ATK
-	var d_stat = gs.DEF if move_data.category == gs.PHYSICAL else gs.SP_DEF
+		var ignore_stats=defender.has_ability("unaware")
+		attacker.calculate_stats_effective(ignore_stats)
+		defender.calculate_stats_effective(ignore_stats)
 
-	var atk_ig = attacker.stats_effective[a_stat]
-	var def_ig = defender.stats_effective[d_stat]
-	if crit_mult > 1:
-		def_ig = min(defender.stats_actual[d_stat], defender.stats_effective[d_stat])
-		atk_ig = max(attacker.stats_actual[a_stat], attacker.stats_effective[a_stat])
-	
-	var ad_ratio = atk_ig / def_ig
+		var a_stat = gs.ATK if move_data.category == gs.PHYSICAL else gs.SP_ATK
+		var d_stat = gs.DEF if move_data.category == gs.PHYSICAL else gs.SP_DEF
+		var atk_ig
+		var def_ig
+		if critical_multiplier == 1:
+			atk_ig = attacker.stats_effective[a_stat]
+			def_ig = defender.stats_effective[d_stat]
+		else:
+			def_ig = min(defender.stats_actual[d_stat], defender.stats_effective[d_stat])
+			atk_ig = max(attacker.stats_actual[a_stat], attacker.stats_effective[a_stat])
 
-	var burn = 0.5 if attacker.nv_status == gs.BURNED and not attacker.has_ability("guts") else 1
-	if attacker.charged and move_data.type == "electric":
-		move_data.power *= 2
-	if move_data.type == "electric" and (attacker.mud_sport or defender.mud_sport):
-		move_data.power /= 2#TODO div entero
-	if move_data.type == "fire" and (attacker.water_sport or defender.water_sport):
-		move_data.power /= 2#TODO div entero
+		var attack_defense_ratio = atk_ig / def_ig
+		var burn_multiplier = 0.5 if attacker.nv_status == gs.BURNED and move_data.category == gs.PHYSICAL and not attacker.has_ability("guts") else 1
 
-	pa.damage_calc_abilities(attacker, defender, battle, move_data, t_mult)
-	#pi.damage_calc_items(attacker, defender, battle, move_data)
+		if attacker.charged and move_data.type == "electric":
+			move_data.power *= 2
 
-	var screen = 1
-	if t_mult <= 1 and ((move_data.category == gs.PHYSICAL and defender.trainer.reflect) or (move_data.category == gs.SPECIAL and defender.trainer.light_screen)):
-		screen = 0.5
+		if move_data.type == "electric" and (attacker.mud_sport or defender.mud_sport):
+			move_data.power /= 2
 
-	var weather_mult = 1
-	if battlefield.weather == gs.HARSH_SUNLIGHT:
-		if move_data.type == "fire":
-			weather_mult = 1.5
-		elif move_data.type == "water":
-			weather_mult = 0.5
-	elif battlefield.weather == gs.RAIN:
-		if move_data.type == "fire":
-			weather_mult = 0.5
-		elif move_data.type == "water":
-			weather_mult = 1.5
+		if move_data.type == "fire" and (attacker.water_sport or defender.water_sport):
+			move_data.power /= 2
 
-	var stab = 1.5 if move_data.type == attacker.types[0] or move_data.type == attacker.types[1] else 1
-	if attacker.has_ability("adaptability"):
-		stab = 2
+		if defender.has_ability("thick-fat") and (move_data.type == "fire" or move_data.type == "ice"):
+			move_data.power /= 2
 
-	var random_mult = randf_range(85, 100) / 100
+		pa.damage_calc_abilities(attacker, defender, battle, move_data, type_multiplier)
+		#pi.damage_calc_items(attacker, defender, battle, move_data)TODO descomentar
 
-	var berry_mult = pi.pre_hit_berries(attacker, defender, battle, move_data, t_mult)
-	var item_mult = pi.damage_mult_items(attacker, defender, battle, move_data, t_mult)
+		var screen_multiplier = 0.5 if (type_multiplier <= 1 and ((move_data.category == gs.PHYSICAL and defender.trainer.reflect) or (move_data.category == gs.SPECIAL and defender.trainer.light_screen))) else 1
+		var weather_multiplier = 1
 
-	var damage = ((2 * attacker.level / 5 + 2) * move_data.power * ad_ratio) / 50 * burn * screen * weather_mult + 2
-	damage = damage * crit_mult * item_mult * random_mult * stab * t_mult * berry_mult
-	damage = int(damage)
-	if skip_dmg:
-		return damage
+		if battlefield.weather == gs.HARSH_SUNLIGHT:
+			if move_data.type == "fire":
+				weather_multiplier = 1.5
+			elif move_data.type == "water":
+				weather_multiplier = 0.5
+		elif battlefield.weather == gs.RAIN:
+			if move_data.type == "fire":
+				weather_multiplier = 0.5
+			elif move_data.type == "water":
+				weather_multiplier = 1.5
+
+		var stab = 1.5 if move_data.type == attacker.types[0] or move_data.type == attacker.types[1] and not attacker.has_ability("adaptability") else 2 if move_data.type == attacker.types[0] or move_data.type == attacker.types[1] else 1
+
+		var random_multiplier = _calculate_random_multiplier_damage()
+
+		var berry_multiplier = pi.pre_hit_berries(attacker, defender, battle, move_data, type_multiplier)
+		var item_multiplier = pi.damage_mult_items(attacker, defender, battle, move_data, type_multiplier)
+
+		damage = ((0.4 * attacker.level + 2) * move_data.power * attack_defense_ratio) / 50 * burn_multiplier * screen_multiplier * weather_multiplier + 2
+		damage *= critical_multiplier * item_multiplier * random_multiplier * stab * type_multiplier * berry_multiplier
+		damage = int(damage)
+
+	else:
+		critical_multiplier = _calculate_critical_multiplier(attacker, defender, battle, crit_chance)
+		damage = fix_damage
+
+		if skip_dmg:
+			return damage
 
 	var damage_done = defender.take_damage(damage, move_data)
 	if not skip_fc:
 		battle._faint_check()
-	if crit_mult > 1 and defender.is_alive and defender.has_ability("anger-point") and defender.stat_stages[gs.ATK] < 6:
+	if critical_multiplier > 1 and defender.is_alive and defender.has_ability("anger-point") and defender.stat_stages[gs.ATK] < 6:
 		battle.add_text(defender.nickname + " maxed its Attack!")
 		defender.stat_stages[gs.ATK] = 6
 	
@@ -170,30 +179,31 @@ static func _calculate_hit_or_miss(
 	move_data: Move,
 	is_first: bool,
 ) -> bool:
-	var d_eva_stage = defender.evasion_stage
-	var a_acc_stage = attacker.accuracy_stage
+	var defender_evasion_stage = defender.evasion_stage
+	var attacker_accuracy_stage = attacker.accuracy_stage
 	
 	# Verifica si la defensa tiene algún efecto que altere la evasión
 	if defender.foresight_target or defender.me_target:
 		if defender.evasion_stage > 0:
-			d_eva_stage = 0
+			defender_evasion_stage = 0
 	
 	# Ajusta el escenario de evasión y precisión basado en habilidades
 	if attacker.has_ability("unaware"):
-		d_eva_stage = 0
+		defender_evasion_stage = 0
 	if defender.has_ability("unaware"):
-		a_acc_stage = 0
-
-	var stage = a_acc_stage - d_eva_stage
+		attacker_accuracy_stage = 0
+	if move_data.name == "stomp" and defender.minimized:
+		defender_evasion_stage = 0
+	var stage = attacker_accuracy_stage - defender_evasion_stage
 	var stage_mult = max(3, 3 + stage) / max(3, 3 - stage)
-	var ability_mult = pa.homc_abilities(attacker, defender, battlefield, battle, move_data)
+	var ability_mult = pa.calculate_precision_modifier_abilities(attacker, defender, battlefield, battle, move_data)
 	var item_mult = pi.homc_items(attacker, defender, battlefield, battle, move_data, is_first)
 	
-	var ma = move_data.acc
+	var move_accuracy = move_data.acc
 	if _special_move_acc(attacker, defender, battlefield, battle, move_data):
 		return true
 
-	if not ma:
+	if not move_accuracy:
 		return true
 
 	if defender.mr_count and defender.mr_target and attacker == defender.mr_target:
@@ -206,20 +216,21 @@ static func _calculate_hit_or_miss(
 		attacker.next_will_hit = false
 		return true
 
-	var res: bool
-	if ma == -1:
-		res = randf_range(1, 101) <= attacker.level - defender.level + 30
+	var precision_result = get_move_precision()
+	var result_hit
+	if move_accuracy == -1:
+		result_hit = precision_result <= attacker.level - defender.level + 30
 	else:
-		var hit_threshold = ma * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
-		res = randf_range(1, 101) <= hit_threshold
+		var hit_threshold = (move_accuracy * stage_mult * battlefield.acc_modifier * item_mult * ability_mult)
+		result_hit = precision_result <= hit_threshold
 
-	if not res:
+	if not result_hit:
 		if defender.evasion_stage > 0:
-			battle.add_text(defender.nickname + " avoided the attack!")
+			_avoided(battle, defender)
 		else:
 			_missed(attacker, battle)
-	
-	return res
+
+	return result_hit
 
 	
 	
@@ -228,8 +239,8 @@ static func _meta_effect_check(attacker: Pokemon, defender: Pokemon, battlefield
 		return true
 	if _snatch_check(attacker, defender, battlefield, battle, move_data, is_first):
 		return true
-	if _protect_check(defender, battle, move_data):
-		return true
+	#if _protect_check(defender, battle, move_data):
+		#return true
 	if _soundproof_check(defender, battle, move_data):
 		return true
 	if _grounded_check(attacker, battle, move_data):
@@ -247,12 +258,37 @@ static func _process_effect(attacker: Pokemon, defender: Pokemon, battlefield: B
 	var inv_bypass = false
 	var cc_ib = [crit_chance, inv_bypass]
 	
-	if _MOVE_EFFECTS[ef_id].call(attacker, defender, battlefield, battle, move_data, is_first, cc_ib):
-		crit_chance = cc_ib[0]
-		inv_bypass = cc_ib[0]
-		_calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
+	_MOVE_EFFECTS[ef_id].call(attacker, defender, battlefield, battle, move_data, is_first, cc_ib)
 
-static func _calculate_crit(crit_chance: int = 0) -> bool:
+
+static func _calculate_critical_multiplier(
+		attacker: Pokemon,
+		defender: Pokemon,
+		battle: Battle,
+		crit_chance: int
+
+) -> int:
+	var cc = crit_chance + attacker.crit_stage if crit_chance else attacker.crit_stage
+	var critical_multiplier
+	if attacker.has_ability("super-luck"):
+		cc += 1
+	if attacker.item == "scope-lens" or attacker.item == "razor-claw":
+		cc += 1
+	elif attacker.item == "lucky-punch" and attacker.name == "chansey":
+		cc += 2
+	if (
+			not defender.trainer.lucky_chant
+			and not defender.has_ability("battle-armor")
+			and not defender.has_ability("shell-armor")
+			and _calculate_is_critical(cc)
+	):
+		critical_multiplier = 2 if not attacker.has_ability("sniper") else 3
+		battle.add_text("A critical hit!")
+	else:
+		critical_multiplier = 1
+	return critical_multiplier
+
+static func _calculate_is_critical(crit_chance: int = 0) -> bool:
 	if not crit_chance:
 		return randi_range(0, 15) < 1
 	elif crit_chance == 1:
@@ -270,17 +306,25 @@ static func _invulnerability_check(attacker: Pokemon, defender: Pokemon, battlef
 	if attacker.has_ability("no-guard") or defender.has_ability("no-guard"):
 		return false
 	if defender.invulnerable:
-		if defender.in_air or defender.in_ground or defender.in_water:
-			_missed(attacker, battle)
+		if defender.in_air:
+			if move_data.name == "gust":
+				return false
+		elif defender.in_ground:
+			if move_data.name == "earthquake":
+				return false
+		elif defender.in_water:
+			if move_data.name in ["surf", "whirlpool", "low-kick"]:
+				return false
+		_avoided(battle, defender)
 		return true
 	return false
 
 static func _pre_process_status(attacker: Pokemon, defender: Pokemon, battlefield: Battlefield, battle: Battle, move_data: Move) -> bool:
 	_mold_breaker_check(attacker, defender, false)
 	
-	if attacker.inv_count > 0:
-		attacker.inv_count -= 1
-		if attacker.inv_count == 0:
+	if attacker.invulnerability_count > 0:
+		attacker.invulnerability_count -= 1
+		if attacker.invulnerability_count == 0:
 			attacker.invulnerable = false
 			attacker.in_ground = false
 			attacker.in_air = false
@@ -356,6 +400,9 @@ static func _generate_2_to_5() -> int:
 		return 4
 	else:
 		return 5
+
+static func get_move_precision() -> int:
+	return randi_range(1, 101)
 
 static func confuse(recipient: Pokemon, battle: Battle, forced: bool = false, bypass: bool = false) -> void:
 	if not recipient.is_alive or recipient.substitute or recipient.has_ability("own-tempo"):
@@ -683,19 +730,21 @@ static func cure_nv_status(status: int, recipient: Pokemon, battle: Battle,):
 	):
 		return
 	var text = ""
-	if status == gs.BURNED:
-		text = "'s burn was healed!"
-	elif status == gs.FROZEN:
-		text = " thawed out!"
-	elif status == gs.PARALYZED:
-		text = " was cured of paralysis!"
-	elif status == gs.ASLEEP:
-		text = " woke up!"
-	else:
-		text = " was cured of poison!"
+	if recipient == recipient.trainer.current_poke:
+		if status == gs.BURNED:
+			text = "'s burn was healed!"
+		elif status == gs.FROZEN:
+			text = " thawed out!"
+		elif status == gs.PARALYZED:
+			text = " was cured of paralysis!"
+		elif status == gs.ASLEEP:
+			text = " woke up!"
+		else:
+			text = " was cured of poison!"
+		battle.add_text(recipient.nickname + text)
 
 	recipient.nv_status = 0
-	battle.add_text(recipient.nickname + text)
+	recipient.nv_counter = 0
 
 static func cure_confusion(recipient: Pokemon, battle: Battle,):
 	if recipient.is_alive and recipient.v_status[gs.CONFUSED]:
@@ -750,7 +799,7 @@ static func _protect_check(defender: Pokemon, battle: Battle, move_data: Move) -
 	if (
 		defender.is_alive
 		and defender.protect
-		and not move_data.name in ["feint", "shadow-force"]
+		and move_data.name not in ["feint", "shadow-force"]
 		and move_data.target in gd.PROTECT_TARGETS
 	):
 		battle.add_text(defender.nickname + " protected itself!")
@@ -763,7 +812,7 @@ static func _soundproof_check(defender: Pokemon, battle: Battle, move_data: Move
 		and defender.has_ability("soundproof")
 		and move_data in gd.SOUNDPROOF_CHECK
 	):
-		battle.add_text("It doesn't affect " + defender.nickname)
+		_not_affected(battle, defender)
 		return true
 	return false
 
@@ -855,6 +904,13 @@ static func _failed(battle: Battle):
 static func _missed(attacker: Pokemon, battle: Battle,):
 	battle.add_text(attacker.nickname + "'s attack missed!")
 
+
+static func _avoided(battle: Battle, defender: Pokemon):
+	battle.add_text(defender.nickname + " avoided the attack!")
+
+static func _not_affected(battle: Battle, defender: Pokemon):
+	battle.add_text("It doesn't affect " + defender.nickname)
+
 static func _safeguard_check(poke: Pokemon, battle: Battle,) -> bool:
 	if poke.trainer.safeguard:
 		battle.add_text(poke.nickname + " is protected by Safeguard!")
@@ -871,7 +927,7 @@ static func _ef_000(
 	cc_ib: Array
 ) -> bool:
 	_calculate_damage(attacker, defender, battlefield, battle, move_data)
-	return true
+	return true#posible error
 
 static func _ef_001(
 	attacker: Pokemon,
@@ -1118,7 +1174,7 @@ static func _ef_018(
 ) -> bool:
 	if defender.in_water:
 		move_data.power *= 2
-		cc_ib[1] = true
+		_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	return false
 
 static func _ef_019(
@@ -1156,7 +1212,7 @@ static func _ef_020(
 		if not defender.is_alive:
 			battle.add_text("It's a one-hit KO!")
 	else:
-		battle.add_text("It doesn't affect " + defender.nickname)
+		_not_affected(battle, defender)
 	return true
 
 static func _ef_021(
@@ -1167,14 +1223,15 @@ static func _ef_021(
 	move_data: Move,
 	is_first: bool,
 	cc_ib: Array
-) -> bool:
+) -> Variant:#posible error
 	if not move_data.ef_stat and not _power_herb_check(attacker, battle):
 		move_data.ef_stat = 1
 		attacker.next_moves.push_back(move_data)
 		battle.add_text(attacker.nickname + " whipped up a whirlwind!")
-		return true
-	cc_ib[0] = 1
-	return false
+	else:
+		cc_ib[0] = 1
+		_calculate_damage(attacker, defender, battlefield, battle, move_data)
+	return null
 
 
 static func _ef_022(
@@ -1187,12 +1244,12 @@ static func _ef_022(
 	cc_ib: Array
 ) -> bool:
 	if defender.in_air:
-		cc_ib[1] = true
 		move_data.power *= 2
+	_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	return false
 
 
-static func _ef_023(
+static func _ef_023_fly(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -1206,11 +1263,13 @@ static func _ef_023(
 		attacker.next_moves.push_back(move_data)
 		attacker.in_air = true
 		attacker.invulnerable = true
-		attacker.inv_count = 1
+		attacker.invulnerability_count = 1
 		battle._pop_text()
 		battle.add_text(attacker.nickname + " flew up high!")
 		return true
-	return false
+	else:
+		_calculate_damage(attacker, defender, battlefield, battle, move_data)
+		return false
 
 
 static func _ef_024(
@@ -1222,6 +1281,8 @@ static func _ef_024(
 	is_first: bool,
 	cc_ib: Array
 ) -> bool:
+	if move_data.name == "whirlpool" and defender.in_water:
+		move_data.power *= 2
 	var dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
 	if defender.is_alive and dmg and not defender.substitute and not defender.v_status[gs.BINDING_COUNT]:
 		defender.v_status[gs.BINDING_COUNT] = 5 if attacker.item == "grip-claw" else _generate_2_to_5()
@@ -1285,7 +1346,7 @@ static func _ef_026(
 ) -> bool:
 	if defender.in_ground:
 		move_data.power *= 2
-		cc_ib[1] = true
+		_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	return false
 
 
@@ -1437,6 +1498,7 @@ static func _ef_034(
 	is_first: bool,
 	cc_ib: Array
 ) -> bool:
+	_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	attacker.recharging = true
 	return false
 
@@ -1496,11 +1558,7 @@ static func _ef_037(
 	is_first: bool,
 	cc_ib: Array
 ) -> bool:
-	if _calculate_type_ef(defender, move_data):
-		if defender.is_alive:
-			defender.take_damage(attacker.level, move_data)
-		else:
-			_missed(attacker, battle)
+	_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	return true
 
 
@@ -1519,9 +1577,10 @@ static func _ef_038(
 		if attacker.item == "big-root":
 			heal_amt = int(heal_amt * 1.3)
 		if not defender.has_ability("liquid-ooze"):
-			var text_skip=true
-			attacker.heal(heal_amt, text_skip)
-			battle.add_text(defender.nickname + " had its energy drained!")
+			if attacker.heal_block_count == 0:
+				var text_skip=true
+				attacker.heal(heal_amt, text_skip)
+				battle.add_text(defender.nickname + " had its energy drained!")
 		else:
 			attacker.take_damage(heal_amt)
 			battle.add_text(attacker.nickname + " sucked up the liquid ooze!")
@@ -1571,7 +1630,7 @@ static func _ef_040(
 	return false
 
 
-static func _ef_041(
+static func _ef_041_thunder(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -1580,12 +1639,13 @@ static func _ef_041(
 	is_first: bool,
 	cc_ib: Array
 ) -> bool:
-	if randi_range(0, 9) < 3:
+	var dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
+	if dmg and randi_range(1,10) < 3:
 		paralyze(defender, battle)
 	return false
 
 
-static func _ef_042(
+static func _ef_042_dig(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -1599,11 +1659,13 @@ static func _ef_042(
 		attacker.next_moves.push_back(move_data)
 		attacker.in_ground = true
 		attacker.invulnerable = true
-		attacker.inv_count = 1
+		attacker.invulnerability_count = 1
 		battle._pop_text()
 		battle.add_text(attacker.nickname + " burrowed its way under the ground!")
 		return true
-	return false
+	else:
+		_calculate_damage(attacker, defender, battlefield, battle, move_data)
+		return false
 
 
 static func _ef_043(
@@ -2100,7 +2162,7 @@ static func _ef_069(
 ) -> bool:
 	if (
 		attacker.transformed
-		or not move_data in attacker.o_moves
+		or move_data not in attacker.o_moves
 		or not defender.is_alive
 		or not defender.last_move
 		or attacker.is_move(defender.last_move.name)
@@ -2535,19 +2597,25 @@ static func _ef_089(
 	is_first: bool,
 	cc_ib: Array
 ) -> bool:
-	if not move_data.ef_stat:
-		if attacker.df_curl and move_data.power == move_data.o_power:
-			move_data.power *= 2
-		move_data.ef_stat = 1
+	var power_multiplier = 1
+	if (attacker.last_move
+		and attacker.last_move == attacker.last_successful_move
+		and attacker.last_move.name == move_data.name
+	):
+		power_multiplier *= 2 ** attacker.move_in_a_row
 	else:
-		move_data.ef_stat += 1
+		attacker.move_in_a_row = 0
+	if defender.has_defense_curl:
+		power_multiplier *= 2
+	move_data.power *= power_multiplier
+	var dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
+	move_data.power = move_data.original_power
 
-	_calculate_damage(
-		attacker, defender, battlefield, battle, move_data, cc_ib[0], cc_ib[1]
-	)
-	move_data.power *= 2
-	if move_data.ef_stat < 5:
-		attacker.next_moves.push_back(move_data)
+	if dmg != 0 and attacker.move_in_a_row < 4:
+		attacker.next_moves.append(move_data)
+		attacker.move_in_a_row += 1
+	else:
+		attacker.move_in_a_row = 0
 	return true
 
 
@@ -2590,7 +2658,7 @@ static func _ef_091(
 	return true
 
 
-static func _ef_092(
+static func _ef_092_fury_cutter(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -2599,11 +2667,15 @@ static func _ef_092(
 	is_first: bool,
 	cc_ib: Array
 ) -> bool:
-	if attacker.last_move and attacker.last_move == attacker.last_successful_move and attacker.last_move.name == move_data.name:
-		move_data.ef_stat = min(5, int(attacker.last_move.ef_stat) + 1)
-		move_data.power = move_data.o_power * (2 ** (move_data.ef_stat - 1))
+	if (attacker.last_move
+		and attacker.last_move == attacker.last_successful_move
+		and attacker.last_move.name == move_data.name
+	):
+		attacker.move_in_a_row += 1
+		move_data.power = min(160, move_data.original_power * 2 ** (attacker.move_in_a_row - 1))
 	else:
-		move_data.ef_stat = 1
+		attacker.move_in_a_row = 1
+	_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	return true
 
 
@@ -2807,7 +2879,7 @@ static func _ef_102(
 	t.current_poke.embargo_count = attacker.embargo_count
 	t.current_poke.magnetic_rise = attacker.magnetic_rise
 	t.current_poke.substitute = attacker.substitute
-	t.current_poke.hb_count = attacker.hb_count
+	t.current_poke.heal_block_count = attacker.heal_block_count
 	t.current_poke.power_trick = attacker.power_trick
 	if not attacker.has_ability("multitype"):
 		t.current_poke.ability_suppressed = attacker.ability_suppressed
@@ -3248,7 +3320,7 @@ static func _ef_124(
 		return true
 	return false
 
-static func _ef_125(
+static func _ef_125_smelling_salts(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -3257,9 +3329,6 @@ static func _ef_125(
 	is_first: bool,
 	cc_ib: Array,
 ) -> bool:
-	if not defender.is_alive:
-		_failed(battle)
-		return true
 	if defender.nv_status == gs.PARALYZED:
 		move_data.power *= 2
 	var dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
@@ -3276,8 +3345,27 @@ static func _ef_126(
 	is_first: bool,
 	cc_ib: Array,
 ) -> bool:
-	move_data = Move.new(PokeSim.get_move_data(["swift"])[0])
-	return false
+	var selected_move
+	if battlefield.get_terrain() in [gs.BUILDING, gs.DISTORSION_WORLD]:
+		selected_move = Move.new(PokeSim.get_single_move("tri-attack"))
+	elif battlefield.get_terrain() == gs.SAND:
+		selected_move = Move.new(PokeSim.get_single_move("earthquake"))
+	elif battlefield.get_terrain() == gs.CAVE:
+		selected_move = Move.new(PokeSim.get_single_move("rock-slide"))
+	elif battlefield.get_terrain() == gs.TALL_GRASS:
+		selected_move = Move.new(PokeSim.get_single_move("seed-bomb"))
+	elif battlefield.get_terrain() == gs.WATER:
+		selected_move = Move.new(PokeSim.get_single_move("hydro-pump"))
+	elif battlefield.get_terrain() == gs.SNOW:
+		selected_move = Move.new(PokeSim.get_single_move("blizzard"))
+	elif battlefield.get_terrain() == gs.ICE:
+		selected_move = Move.new(PokeSim.get_single_move("ice-beam"))
+	else:
+		selected_move = Move.new(PokeSim.get_single_move("tri-attack"))
+	print("ef126")
+	var effect_move = _MOVE_EFFECTS[selected_move.ef_id]
+	battle.add_text(cap_name(move_data.name) + " turned into " + cap_name(selected_move.name) + "!")
+	return effect_move
 
 static func _ef_127(
 	attacker: Pokemon,
@@ -3702,7 +3790,7 @@ static func _ef_149(
 		paralyze(defender, battle)
 	return true
 
-static func _ef_150(
+static func _ef_150_dive(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -3716,11 +3804,13 @@ static func _ef_150(
 		attacker.next_moves.append(move_data)
 		attacker.in_water = true
 		attacker.invulnerable = true
-		attacker.inv_count = 1
+		attacker.invulnerability_count = 1
 		battle._pop_text()
 		battle.add_text(attacker.nickname + " hid underwater!")
 		return true
-	return false
+	else:
+		_calculate_damage(attacker, defender, battlefield, battle, move_data)
+		return false
 
 static func _ef_151(
 	attacker: Pokemon,
@@ -3788,6 +3878,7 @@ static func _ef_154(
 			move_data.type = "normal"
 	if battlefield.weather != gs.CLEAR:
 		move_data.power *= 2
+	_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	return false
 
 static func _ef_156(
@@ -3865,7 +3956,7 @@ static func _ef_160(
 		_failed(battle)
 	return false
 
-static func _ef_161(
+static func _ef_161_bounce(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -3879,7 +3970,7 @@ static func _ef_161(
 		attacker.next_moves.append(move_data)
 		attacker.in_air = true
 		attacker.invulnerable = true
-		attacker.inv_count = 1
+		attacker.invulnerability_count = 1
 		battle._pop_text()
 		battle.add_text(attacker.nickname + " sprang up!")
 		return true
@@ -4009,7 +4100,7 @@ static func _ef_168(
 	cc_ib: Array,
 ) -> bool:
 	attacker.heal(max(1, attacker.max_hp / 2))#TODO div entero
-	if not is_first or not "flying" in attacker.types:
+	if not is_first or "flying" not in attacker.types:
 		return true
 	attacker.r_types = attacker.types
 	var other_type = []
@@ -4133,7 +4224,7 @@ static func _ef_175(
 	if (
 		attacker.item
 		and attacker.item in gd.BERRY_DATA
-		and not battlefield.weather in [gs.HARSH_SUNLIGHT, gs.RAIN]
+		and battlefield.weather not in [gs.HARSH_SUNLIGHT, gs.RAIN]
 		and not attacker.has_ability("klutz")
 		and not attacker.embargo_count
 	):
@@ -4397,8 +4488,8 @@ static func _ef_189(
 	is_first: bool,
 	cc_ib: Array,
 ) -> bool:
-	if defender.is_alive and not defender.hb_count:
-		defender.hb_count = 5
+	if defender.is_alive and not defender.heal_block_count:
+		defender.heal_block_count = 5
 		battle.add_text(defender.nickname + " was prevented from healing!")
 	else:
 		_failed(battle)
@@ -4647,7 +4738,7 @@ static func _ef_201(
 	is_first: bool,
 	cc_ib: Array,
 ) -> bool:
-	if not is_first or not attacker.sp_check:
+	if not is_first or not attacker.sucker_punch_check:
 		_failed(battle)
 		return true
 	return false
@@ -4818,13 +4909,15 @@ static func _ef_211(
 		battle.add_text(_stat_text(defender, gs.EVA, -1))
 		if defender.evasion_stage > -6:
 			defender.evasion_stage -= 1
-	defender.trainer.spikes = 0
-	defender.trainer.toxic_spikes = 0
-	defender.stealth_rock = 0
-	defender.trainer.safeguard = 0
-	defender.trainer.light_screen = 0
-	defender.trainer.reflect = 0
-	defender.trainer.mist = 0
+	attacker.trainer.spikes = 0
+	attacker.trainer.toxic_spikes = 0
+	attacker.trainer.stealth_rock = 0
+	attacker.trainer.safeguard = 0
+	attacker.trainer.light_screen = 0
+	attacker.trainer.reflect = 0
+	attacker.trainer.mist = 0
+	if battlefield.weather == gs.FOG:
+		battlefield.weather = gs.CLEAR
 	return false
 
 static func _ef_212(
@@ -4945,7 +5038,7 @@ static func _ef_218(
 		move.cur_pp = move.max_pp
 	return false
 
-static func _ef_219(
+static func _ef_219_shadow_force(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -4958,32 +5051,34 @@ static func _ef_219(
 		move_data.ef_stat = 1
 		attacker.next_moves.push_back(move_data)
 		attacker.invulnerable = true
-		attacker.inv_count = 1
+		attacker.invulnerability_count = 1
 		battle.add_text(attacker.nickname + " vanished instantly!")
-	attacker.invulnerable = false
-	return false
+		return true
+	else:
+		_calculate_damage(attacker, defender, battlefield, battle, move_data)
+		return false
 
 static var _MOVE_EFFECTS = [
 	_ef_000, _ef_001, _ef_002, _ef_003, _ef_004, _ef_005, _ef_006, _ef_007, _ef_008, _ef_009, 
 	_ef_010, _ef_011, null, _ef_013, _ef_014, null, _ef_016, _ef_017, _ef_018, _ef_019, _ef_020, 
-	_ef_021, _ef_022, _ef_023, _ef_024, _ef_025, _ef_026, _ef_027, _ef_028, _ef_029, _ef_030, 
+	_ef_021, _ef_022, _ef_023_fly, _ef_024, _ef_025, _ef_026, _ef_027, _ef_028, _ef_029, _ef_030, 
 	_ef_031, _ef_032, _ef_033, _ef_034, _ef_035, _ef_036, _ef_037, _ef_038, _ef_039, _ef_040, 
-	_ef_041, _ef_042, _ef_043, _ef_044, null, _ef_046, _ef_047, _ef_048, _ef_049, _ef_050, 
+	_ef_041_thunder, _ef_042_dig, _ef_043, _ef_044, null, _ef_046, _ef_047, _ef_048, _ef_049, _ef_050, 
 	_ef_051, _ef_052, _ef_053, _ef_054, _ef_055, _ef_056, _ef_057, _ef_058, _ef_059, _ef_060, 
 	_ef_061, _ef_062, _ef_063, _ef_064, _ef_065, _ef_066, _ef_067, _ef_068, _ef_069, _ef_070, 
 	_ef_071, _ef_072, _ef_073, _ef_074, _ef_075, _ef_076, _ef_077, _ef_078, _ef_079, _ef_080, 
 	_ef_081, _ef_082, _ef_083, _ef_084, _ef_085, _ef_086, _ef_087, _ef_088, _ef_089, _ef_090, 
-	_ef_091, _ef_092, _ef_093, _ef_094, _ef_095, _ef_096, _ef_097, _ef_098, _ef_099, _ef_100, 
+	_ef_091, _ef_092_fury_cutter, _ef_093, _ef_094, _ef_095, _ef_096, _ef_097, _ef_098, _ef_099, _ef_100, 
 	_ef_101, _ef_102, _ef_103, _ef_104, _ef_105, _ef_106, _ef_107, _ef_108, _ef_109, _ef_110, 
 	_ef_111, _ef_112, _ef_113, _ef_114, _ef_115, _ef_116, _ef_117, _ef_118, _ef_119, _ef_120, 
-	_ef_121, _ef_122, _ef_123, _ef_124, _ef_125, _ef_126, _ef_127, _ef_128, _ef_129, _ef_130, 
+	_ef_121, _ef_122, _ef_123, _ef_124, _ef_125_smelling_salts, _ef_126, _ef_127, _ef_128, _ef_129, _ef_130, 
 	_ef_131, _ef_132, _ef_133, _ef_134, _ef_135, _ef_136, _ef_137, _ef_138, _ef_139, _ef_140, 
-	_ef_141, _ef_142, _ef_143, _ef_144, _ef_145, _ef_146, _ef_147, _ef_148, _ef_149, _ef_150, 
+	_ef_141, _ef_142, _ef_143, _ef_144, _ef_145, _ef_146, _ef_147, _ef_148, _ef_149, _ef_150_dive, 
 	_ef_151, _ef_152, _ef_153, _ef_154, null, _ef_156, _ef_157, _ef_158, _ef_159, _ef_160, 
-	_ef_161, _ef_162, _ef_163, _ef_164, _ef_165, _ef_166, _ef_167, _ef_168, _ef_169, _ef_170, 
+	_ef_161_bounce, _ef_162, _ef_163, _ef_164, _ef_165, _ef_166, _ef_167, _ef_168, _ef_169, _ef_170, 
 	_ef_171, _ef_172, _ef_173, _ef_174, _ef_175, _ef_176, _ef_177, _ef_178, _ef_179, _ef_180, 
 	_ef_181, _ef_182, _ef_183, _ef_184, _ef_185, _ef_186, _ef_187, _ef_188, _ef_189, _ef_190, 
 	_ef_191, _ef_192, _ef_193, _ef_194, _ef_195, _ef_196, _ef_197, _ef_198, _ef_199, _ef_200, 
 	_ef_201, _ef_202, _ef_203, _ef_204, _ef_205, _ef_206, _ef_207, _ef_208, _ef_209, _ef_210, 
-	_ef_211, _ef_212, _ef_213, _ef_214, _ef_215, _ef_216, _ef_217, _ef_218, _ef_219
+	_ef_211, _ef_212, _ef_213, _ef_214, _ef_215, _ef_216, _ef_217, _ef_218, _ef_219_shadow_force
 ]

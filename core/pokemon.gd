@@ -52,12 +52,12 @@ var bide_count
 var bide_dmg
 var protect_count
 var embargo_count
-var hb_count
+var heal_block_count
 var uproar
 var stockpile
 var charged
 var taunt
-var inv_count
+var invulnerability_count
 var ability_count
 var metronome_count
 var last_damage_taken
@@ -105,7 +105,7 @@ var power_trick
 var ability_suppressed
 var ability_activated
 var item_activated
-var sp_check
+var sucker_punch_check
 var magnet_rise
 var has_moved
 var prio_boost
@@ -152,6 +152,7 @@ var original
 var trainer
 var r_amt
 var enemy
+var move_in_a_row
 #endregion
 
 # Constructor de la clase
@@ -208,21 +209,27 @@ func _init(
 		return
 
 	if stats_actual:
-		if not (stats_actual is Array and stats_actual.size() == gs.STAT_NUM):
+
+		if not (stats_actual is Array) or stats_actual.size() != gs.STAT_NUM:
 			push_error("Attempted to create Pokemon with invalid stats")
 			return
+
 		var valid_stats = true
 		for s in stats_actual:
-			if not (typeof(s) == TYPE_INT and s > gs.STAT_ACTUAL_MIN and s < gs.STAT_ACTUAL_MAX):
+			if not (typeof(s) == TYPE_INT and s >= gs.STAT_ACTUAL_MIN and s < gs.STAT_ACTUAL_MAX):
 				valid_stats = false
 				break
+
 		if not valid_stats:
 			push_error("Attempted to create Pokemon with invalid stats")
+			return
+
 		self.stats_actual = stats_actual
-		self.ivs = []
-		self.evs = []
-		self.nature = ""
-		self.nature_effect = []
+		self.ivs = null
+		self.evs = null
+		self.nature = null
+		self.nature_effect = null
+
 	else:
 		if not (ivs is Array and evs is Array and ivs.size() == gs.STAT_NUM and evs.size() == gs.STAT_NUM):
 			push_error("Attempted to create Pokemon with invalid evs or ivs")
@@ -247,6 +254,8 @@ func _init(
 			push_error("Attempted to create Pokemon with invalid evs")
 			return
 		self.evs = evs
+		if not nature:
+			push_error("Attempted to create Pokemon without providing its nature")
 		self.nature_effect = PokeSim.nature_conversion(nature.to_lower())
 		if not self.nature_effect:
 			push_error("Attempted to create Pokemon without providing its nature")
@@ -259,6 +268,12 @@ func _init(
 		push_error("Attempted to create Pokemon with invalid hp value")
 		return
 	self.cur_hp = cur_hp if cur_hp >= 0 else self.stats_actual[gs.HP]
+
+	if not moves:
+		push_error("Attempted to create Pokemon with no moveset")
+
+	if len(moves) > gs.MOVES_MAX:
+		push_error("Attempted to create Pokemon with too much moves")
 
 	var moves_data = PokeSim.get_move_data(moves)
 	if not moves_data:
@@ -332,6 +347,8 @@ func calculate_stats_actual():
 				(((2 * self.base[s] + self.ivs[s] + self.evs[s] / 4) * self.level) / 100) + 5#TODO div de enteros //
 			) * nature_stat_changes[s]
 		)
+	if self.name == "shedinja":
+		stats_actual[0] = 1.0
 	self.stats_actual = []
 	for stat in stats_actual:
 		self.stats_actual.append(int(stat))
@@ -376,12 +393,12 @@ func reset_stats():
 	self.bide_dmg = 0
 	self.protect_count = 0
 	self.embargo_count = 0
-	self.hb_count = 0
+	self.heal_block_count = 0
 	self.uproar = 0
 	self.stockpile = 0
 	self.charged = 0
 	self.taunt = 0
-	self.inv_count = 0
+	self.invulnerability_count = 0
 	self.ability_count = 0
 	self.metronome_count = 0
 	self.last_damage_taken = 0
@@ -427,13 +444,14 @@ func reset_stats():
 	self.ability_suppressed = false
 	self.ability_activated = false
 	self.item_activated = false
-	self.sp_check = false
+	self.sucker_punch_check = false
 	self.magnet_rise = false
 	self.has_moved = false
 	self.prio_boost = false
 	self.next_will_hit = false
 	self.unburden = false
 	self.turn_damage = false
+	self.move_in_a_row = 0
 	self.moves = self.o_moves
 	self.ability = self.o_ability
 	
@@ -629,12 +647,13 @@ func get_available_moves() -> Array:
 				filtered_moves.append(move)
 		av_moves = filtered_moves
 
-	if self.hb_count and av_moves.size():
-		var filtered_moves = []
-		for move in av_moves:
-			if move not in gd.HEAL_BLOCK_CHECK:
-				filtered_moves.append(move)
-		av_moves = filtered_moves
+	if self.heal_block_count and av_moves.size():
+		printerr("heal_block_count comentado")
+		#var filtered_moves = []
+		#for move in av_moves:
+			#if move not in gd.HEAL_BLOCK_CHECK:
+				#filtered_moves.append(move)
+		#av_moves = filtered_moves
 
 	if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke == self.enemy.current_poke and av_moves.size():
 		var i_moves = []
@@ -805,7 +824,7 @@ func can_switch_out() -> bool:
 	#
 	#Returns:
 	#- bool: True if the Pokemon can switch out, False otherwise.
-
+	self._must_be_in_battle()
 	if self.item == "shed-shell":
 		return true
 	if (
@@ -843,6 +862,7 @@ func can_use_item() -> bool:
 	Returns:
 	- bool: True if the item can be used, False otherwise.
 	"""
+	self._must_be_in_battle()
 	return not self.embargo_count
 
 func has_ability(ability_name: String) -> bool:
@@ -1007,3 +1027,7 @@ func restore_all_pp(amount: int):
 	for move in self.moves:
 		move.cur_pp = min(move.cur_pp + amount, move.max_pp)
 	self.cur_battle.add_text(self.nickname + "'s move's pp were restored!")
+
+func _must_be_in_battle():
+	if not self.in_battle:
+		push_error("Pokemon must be in battle")

@@ -72,11 +72,13 @@ func _init(t1: tr.Trainer, t2: tr.Trainer, terrain: String = gs.OTHER_TERRAIN, w
 	self.battle_started = false
 	self.all_text = []
 	self.cur_text = []
+	self.battlefield = Battlefield.new(self,terrain, weather)
+
 
 # Método para iniciar la batalla
 func start():
-	self.t1.start_pokemon(self)
-	self.t2.start_pokemon(self)
+	self.t1.start(self)
+	self.t2.start(self)
 	self.t1_faint = false
 	self.t2_faint = false
 	self.battle_started = true
@@ -163,7 +165,7 @@ func turn(t1_turn: Array, t2_turn: Array) -> bool:
 				t1_first = randf_range(0, 1) < 1
 			else:
 				t1_first = spd_dif > 0
-				if self.battlefield.gravity_count:
+				if self.battlefield.trick_room_count:
 					t1_first = not t1_first
 				if self._stall_check():
 					t1_first = self._calculate_stall()

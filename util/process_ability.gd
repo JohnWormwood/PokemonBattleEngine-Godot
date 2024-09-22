@@ -14,19 +14,19 @@ const gd = preload("res://gdScripts/pokeSim/conf/global_data.gd")
 static func selection_abilities(poke: pk, battlefield: bf, battle: bt) -> void:
 	if poke.has_ability("drizzle") and battlefield.weather != gs.RAIN:
 		battlefield.change_weather(gs.RAIN)
-		battlefield.weather_count = 999
+		battlefield.weather_count = -1
 		battle.add_text("It started to rain!")
 	elif poke.has_ability("drought") and battlefield.weather != gs.HARSH_SUNLIGHT:
 		battlefield.change_weather(gs.HARSH_SUNLIGHT)
-		battlefield.weather_count = 999
+		battlefield.weather_count = -1
 		battle.add_text("The sunlight turned harsh!")
 	elif poke.has_ability("snow-warning") and battlefield.weather != gs.HAIL:
 		battlefield.change_weather(gs.HAIL)
-		battlefield.weather_count = 999
+		battlefield.weather_count = -1
 		battle.add_text("It started to hail!")
 	elif poke.has_ability("sand-stream") and battlefield.weather != gs.SANDSTORM:
 		battlefield.change_weather(gs.SANDSTORM)
-		battlefield.weather_count = 999
+		battlefield.weather_count = -1
 		battle.add_text("A sandstorm brewed")
 	elif poke.has_ability("water-veil") and poke.nv_status == gs.BURNED:
 		pm.cure_nv_status(gs.BURNED, poke, battle)
@@ -123,12 +123,12 @@ static func end_turn_abilities(poke: Pokemon, battle: Battle) -> void:
 		poke.enemy.current_poke.take_damage(max(1, poke.enemy.current_poke.max_hp / 8))#TODO div enteros
 
 static func type_protection_abilities(defender: Pokemon, move_data: Move, battle: Battle) -> bool:
-	if defender.has_ability("volt-absorb") and move_data.type == "electric":
+	if defender.has_ability("volt-absorb") and move_data.type == "electric" and defender.heal_block_count == 0:
 		battle.add_text(defender.nickname + " absorbed " + move_data.name + " with Volt Absorb!")
 		if defender.cur_hp != defender.max_hp:
 			defender.heal(defender.max_hp / 4) # TODO Dividir por 4, ya que se usa en Python. Si prefieres redondear, usa floor()
 		return true
-	elif defender.has_ability("water-absorb") and move_data.type == "water":
+	elif defender.has_ability("water-absorb") and move_data.type == "water" and defender.heal_block_count == 0:
 		battle.add_text(defender.nickname + " absorbed " + move_data.name + " with Water Absorb!")
 		if defender.cur_hp != defender.max_hp:
 			defender.heal(defender.max_hp / 4) #TODO Dividir por 4, ya que se usa en Python. Si prefieres redondear, usa floor()
@@ -175,8 +175,8 @@ static func on_hit_abilities(
 	elif (
 		defender.has_ability("poison-point")
 		and made_contact
-		and not "steel" in attacker.types
-		and not "poison" in attacker.types
+		and "steel" not in attacker.types
+		and "poison" not in attacker.types
 		and randf_range(0, 9) < 3
 	):
 		pm.poison(attacker, battle)
@@ -217,7 +217,7 @@ static func damage_calc_abilities(
 	defender: Pokemon,
 	battle: Battle,
 	move_data: Move,
-	t_mult: int
+	t_mult: float
 ):
 	if attacker.has_ability("flash-fire") and attacker.ability_activated and move_data.type == "fire":
 		move_data.power = int(move_data.power * 1.5)
@@ -250,7 +250,7 @@ static func damage_calc_abilities(
 	elif (defender.has_ability("filter") or defender.has_ability("solid-rock")) and t_mult > 1:
 		move_data.power *= 0.75
 
-static func homc_abilities(
+static func calculate_precision_modifier_abilities(
 	attacker: Pokemon,
 	defender: Pokemon,
 	battlefield: Battlefield,
@@ -262,14 +262,14 @@ static func homc_abilities(
 		ability_mult *= 0.8
 	elif defender.has_ability("snow-cloak") and battlefield.weather == gs.HAIL:
 		ability_mult *= 0.8
-	elif defender.has_ability("compound-eyes"):
+	elif attacker.has_ability("compound-eyes"):
 		ability_mult *= 1.3
 	elif defender.has_ability("hustle") and move_data.category == gs.PHYSICAL:
 		ability_mult *= 0.8
 	elif defender.has_ability("tangled-feet") and defender.v_status[gs.CONFUSED]:
 		ability_mult *= 0.5
-	elif defender.has_ability("thick-fat") and (move_data.type == "fire" or move_data.type == "ice"):
-		ability_mult *= 0.5
+	#elif defender.has_ability("thick-fat") and (move_data.type == "fire" or move_data.type == "ice"):
+		#ability_mult *= 0.5
 
 	return ability_mult
 
