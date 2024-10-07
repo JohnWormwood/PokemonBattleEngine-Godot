@@ -168,7 +168,6 @@ static func _calculate_damage(
 		defender.stat_stages[gs.ATK] = 6
 	
 	pi.post_damage_items(attacker, battle, damage_done)
-	print("Damage:  ",damage_done)
 	return damage_done
 
 static func _calculate_hit_or_miss(
@@ -239,8 +238,8 @@ static func _meta_effect_check(attacker: Pokemon, defender: Pokemon, battlefield
 		return true
 	if _snatch_check(attacker, defender, battlefield, battle, move_data, is_first):
 		return true
-	#if _protect_check(defender, battle, move_data):
-		#return true
+	if _protect_check(defender, battle, move_data):
+		return true
 	if _soundproof_check(defender, battle, move_data):
 		return true
 	if _grounded_check(attacker, battle, move_data):
@@ -379,7 +378,7 @@ static func _pre_process_status(attacker: Pokemon, defender: Pokemon, battlefiel
 			battle.add_text(attacker.nickname + " is confused!")
 			if randi_range(0, 1) < 1:
 				battle.add_text("It hurt itself in its confusion!")
-				var self_attack = Move.new([0, "self-attack", 1, "typeless", 40, 1, 999, 0, 10, 2, 1, "", "", ""])
+				var self_attack = Move.new().set_move_data([0, "self-attack", 1, "typeless", 40, 1, 999, 0, 10, 2, 1, "", "", ""])
 				var crit_chance = 0
 				_calculate_damage(attacker, attacker, battlefield, battle, self_attack, crit_chance)
 				return true
@@ -492,7 +491,7 @@ static func give_stat_change(
 		recipient.stat_stages[stat] = _fit_stat_bounds(
 			recipient.stat_stages[stat] + amount
 		)
-	if -6 < r_stat < 6 or forced:
+	if r_stat <= 6 and r_stat >= -6 or forced:
 		battle.add_text(_stat_text(recipient, stat, amount))
 	return
 
@@ -1174,7 +1173,7 @@ static func _ef_018(
 ) -> bool:
 	if defender.in_water:
 		move_data.power *= 2
-		_calculate_damage(attacker, defender, battlefield, battle, move_data)
+	_calculate_damage(attacker, defender, battlefield, battle, move_data)
 	return false
 
 static func _ef_019(
@@ -1700,7 +1699,7 @@ static func _ef_044(
 		and not attacker.copied
 		and not attacker.is_move(defender.last_move.md)
 	):
-		attacker.copied = Move.new(defender.last_move.md)
+		attacker.copied = Move.new().set_move_data(defender.last_move.md)
 		attacker.copied.max_pp = min(5, attacker.copied.max_pp)
 		attacker.copied.cur_pp = attacker.copied.max_pp
 		battle.add_text(
@@ -1856,7 +1855,7 @@ static func _ef_053(
 	):
 		rand_move = PokeSim.get_rand_move()
 		attempts += 1
-	rand_move = Move.new(rand_move)
+	rand_move = Move.new().set_move_data(rand_move)
 	battle.add_text(attacker.nickname + " used " + cap_name(rand_move.name) + "!")
 	_process_effect(attacker, defender, battlefield, battle, rand_move, is_first)
 	return true
@@ -2169,7 +2168,7 @@ static func _ef_069(
 	):
 		_failed(battle)
 		return true
-	attacker.moves[move_data.pos] = Move.new(defender.last_move.md)
+	attacker.moves[move_data.pos] = Move.new().set_move_data(defender.last_move.md)
 	return true
 
 
@@ -2708,7 +2707,7 @@ static func _ef_094(
 			if move.name != "sleep-talk":
 				pos_moves.append(move)
 		if pos_moves.size() > 0:
-			var sel_move = Move.new(pos_moves[randi_range(0, pos_moves.size() - 1)].md)
+			var sel_move = Move.new().set_move_data(pos_moves[randi_range(0, pos_moves.size() - 1)].md)
 			battle.add_text(attacker.nickname + " used " + cap_name(sel_move.name) + "!")
 			_process_effect(attacker, defender, battlefield, battle, sel_move, is_first)
 	else:
@@ -2869,7 +2868,7 @@ static func _ef_102(
 ) -> bool:
 	var t = attacker.trainer
 	var old_poke = attacker
-	if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
+	if t.num_fainted >= len(t.poke_list) - 1 or await battle._process_selection(t):
 		_failed(battle)
 	t.current_poke.v_status = attacker.v_status.duplicate()
 	t.current_poke.stat_stages = attacker.stat_stages.duplicate()
@@ -3347,21 +3346,21 @@ static func _ef_126(
 ) -> bool:
 	var selected_move
 	if battlefield.get_terrain() in [gs.BUILDING, gs.DISTORSION_WORLD]:
-		selected_move = Move.new(PokeSim.get_single_move("tri-attack"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("tri-attack"))
 	elif battlefield.get_terrain() == gs.SAND:
-		selected_move = Move.new(PokeSim.get_single_move("earthquake"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("earthquake"))
 	elif battlefield.get_terrain() == gs.CAVE:
-		selected_move = Move.new(PokeSim.get_single_move("rock-slide"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("rock-slide"))
 	elif battlefield.get_terrain() == gs.TALL_GRASS:
-		selected_move = Move.new(PokeSim.get_single_move("seed-bomb"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("seed-bomb"))
 	elif battlefield.get_terrain() == gs.WATER:
-		selected_move = Move.new(PokeSim.get_single_move("hydro-pump"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("hydro-pump"))
 	elif battlefield.get_terrain() == gs.SNOW:
-		selected_move = Move.new(PokeSim.get_single_move("blizzard"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("blizzard"))
 	elif battlefield.get_terrain() == gs.ICE:
-		selected_move = Move.new(PokeSim.get_single_move("ice-beam"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("ice-beam"))
 	else:
-		selected_move = Move.new(PokeSim.get_single_move("tri-attack"))
+		selected_move = Move.new().set_move_data(PokeSim.get_single_move("tri-attack"))
 	print("ef126")
 	var effect_move = _MOVE_EFFECTS[selected_move.ef_id]
 	battle.add_text(cap_name(move_data.name) + " turned into " + cap_name(selected_move.name) + "!")
@@ -3484,7 +3483,7 @@ static func _ef_133(
 			defender,
 			battlefield,
 			battle,
-			Move.new(possible_moves[randi_range(0, possible_moves.size() - 1)].md),
+			Move.new().set_move_data(possible_moves[randi_range(0, possible_moves.size() - 1)].md),
 			is_first,
 		)
 	else:
@@ -3639,7 +3638,7 @@ static func _ef_141(
 			+ cap_name(defender.item)
 			+ "!"
 		)
-		defender.item = null
+		defender.item = ""
 	return true
 
 static func _ef_142(
@@ -4191,7 +4190,7 @@ static func _ef_173(
 	cc_ib: Array,
 ) -> bool:
 	var t = attacker.trainer
-	if t.num_fainted >= t.poke_list.size() - 1 or battle._process_selection(t):
+	if t.num_fainted >= t.poke_list.size() - 1 or await battle._process_selection(t):
 		_failed(battle)
 	battle.add_text("The healing wish came true!")
 	t.current_poke.heal(t.current_poke.max_hp)
@@ -4601,7 +4600,7 @@ static func _ef_195(
 ) -> bool:
 	if battle.last_move and battle.last_move.name != move_data.name:
 		_process_effect(
-			attacker, defender, battlefield, battle, Move.new(battle.last_move.md), is_first
+			attacker, defender, battlefield, battle, Move.new().set_move_data(battle.last_move.md), is_first
 		)
 		return true
 	else:

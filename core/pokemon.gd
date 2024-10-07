@@ -1,4 +1,6 @@
+extends Resource
 class_name Pokemon
+
 
 # Importa las clases necesarias
 
@@ -8,8 +10,6 @@ const tr = preload("res://gdScripts/pokeSim/core/trainer.gd")
 const pa = preload("res://gdScripts/pokeSim/util/process_ability.gd")
 const pi = preload("res://gdScripts/pokeSim/util/process_item.gd")
 const pm = preload("res://gdScripts/pokeSim/util/process_move.gd")
-
-
 
 const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
 const gd = preload("res://gdScripts/pokeSim/conf/global_data.gd")
@@ -112,34 +112,16 @@ var prio_boost
 var next_will_hit
 var unburden
 var turn_damage
-var moves
-var ability
 var o_moves
 var o_ability
 var o_item
-var item
 var h_item
 var old_pp
-
-# Declaración de variables de instancia
-var name
-var id
-var level
-var gender
-var nature
-var stats_actual
-var cur_hp
-var ivs
-var evs
-var status
-var nickname
-var friendship
-var stats_base
 var types: Variant
 var base
 var height
 var weight
-var base_exp
+var base_exp: int
 var gen
 var nature_effect = []
 var nv_status
@@ -153,16 +135,35 @@ var trainer
 var r_amt
 var enemy
 var move_in_a_row
+var stats_base: Array
 #endregion
+# Declaración de variables de instancia
+@export var name: String
+var id: int
+@export var level: int
+@export var moves: Array
+@export var gender: String
+@export var nature: String
+@export var stats_actual: Array
+@export var ability: String
+@export var cur_hp: int
+@export var ivs: Array
+@export var evs: Array
+@export var item: String
+@export var status: String
+@export var nickname: String
+@export var friendship: int
 
-# Constructor de la clase
-func _init(
+func _init():
+	pass
+# Constructor
+func set_pokemon_data(
 	name_or_id: Variant,
 	level: int,
 	moves: Array,
 	gender: String,
 	nature: String = "",
-	stats_actual: Array = [],
+	stats_actual: Array= [],
 	ability: String = "",
 	cur_hp: int = -1,
 	ivs: Array = [],
@@ -173,11 +174,12 @@ func _init(
 	friendship: int = 0
 ):
 	# Creación del objeto Pokémon
+	print(name_or_id," ",moves)
 	self.stats_base = PokeSim.get_pokemon(name_or_id)
 	if not stats_base:
 		push_error("Attempted to create Pokemon with invalid name or id")
 		return
-
+	
 	id = stats_base[gs.NDEX]
 	name = stats_base[gs.NAME]
 	types = [stats_base[gs.TYPE1], stats_base[gs.TYPE2]]
@@ -225,9 +227,9 @@ func _init(
 			return
 
 		self.stats_actual = stats_actual
-		self.ivs = null
-		self.evs = null
-		self.nature = null
+		self.ivs = []
+		self.evs = []
+		self.nature
 		self.nature_effect = null
 
 	else:
@@ -282,7 +284,7 @@ func _init(
 		
 	self.moves = []
 	for move_d in moves_data:
-		self.moves.append(Move.new(move_d))
+		self.moves.append(Move.new().set_move_data(move_d))
 
 	for i in range(self.moves.size()):
 		self.moves[i].pos = i
@@ -329,6 +331,8 @@ func _init(
 	self.in_battle = false
 	self.transformed = false
 	self.invulnerable = false
+	
+	return self
 
 # Cálculo de estadísticas actuales
 func calculate_stats_actual():

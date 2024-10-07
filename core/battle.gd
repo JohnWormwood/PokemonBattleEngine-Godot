@@ -86,7 +86,8 @@ func start():
 	self.last_move = null
 	self.last_move_next = null
 	self.turn_count = 0
-	
+	add_text(self.t1.name+ "   VS   "+ self.t2.name)
+	add_text("FIGHT!!               ")
 	add_text(self.t1.name + " sent out " + self.t1.current_poke.nickname + "!")
 	add_text(self.t2.name + " sent out " + self.t2.current_poke.nickname + "!")
 
@@ -147,11 +148,11 @@ func turn(t1_turn: Array, t2_turn: Array) -> bool:
 	if not t1_move_data and t1_command[gs.ACTION_TYPE] == gd.MOVE:
 		t1_move_data = self.t1.current_poke.get_move_data(t1_command[gs.ACTION_VALUE])
 		if not t1_move_data:
-			t1_move_data = Move.new(PokeSim.get_single_move(t1_command[gs.ACTION_VALUE]))
+			t1_move_data = Move.new().set_move_data(PokeSim.get_single_move(t1_command[gs.ACTION_VALUE]))
 	if not t2_move_data and t2_command[gs.ACTION_TYPE] == gd.MOVE:
 		t2_move_data = self.t2.current_poke.get_move_data(t2_command[gs.ACTION_VALUE])
 		if not t2_move_data:
-			t2_move_data = Move.new(PokeSim.get_single_move(t2_command[gs.ACTION_VALUE]))
+			t2_move_data = Move.new().set_move_data(PokeSim.get_single_move(t2_command[gs.ACTION_VALUE]))
 	
 	var t1_prio = gs.ACTION_PRIORITY[t1_command[gs.ACTION_TYPE]]
 	var t2_prio = gs.ACTION_PRIORITY[t2_command[gs.ACTION_TYPE]]
@@ -564,9 +565,11 @@ func _process_selection(selector: tr.Trainer, can_skip: bool = true) -> bool:
 		return true
 
 	var old_poke = selector.current_poke
-	if selector.selection:
-		selector.selection.call(selector)
-
+	if selector.selection and selector.next_poke == null:
+		await selector.selection.call()
+		selector.next_poke = null
+		print("selector await finished")
+	
 	if not selector.current_poke.is_alive or selector.current_poke == old_poke:
 		for p in selector.poke_list:
 			if p.is_alive and p != old_poke:
@@ -646,7 +649,7 @@ func _process_selection(selector: tr.Trainer, can_skip: bool = true) -> bool:
 func _process_other(attacker: tr.Trainer, defender: tr.Trainer, a_move: Array) -> void:
 	if a_move == gd.SWITCH:
 		if attacker.can_switch_out():
-			var can_skip
+			var can_skip = false
 			_process_selection(attacker, can_skip)
 		else:
 			push_error("Trainer attempted to switch out Pokemon that's trapped")

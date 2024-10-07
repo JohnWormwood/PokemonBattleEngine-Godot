@@ -12,8 +12,8 @@ class Trainer:
 	var poke_list: Array
 	var selection: Variant
 	var in_battle: bool  # Asegúrate de definir la propiedad
-	#region Var
 	var current_poke
+	var next_poke
 	var light_screen
 	var safeguard
 	var reflect
@@ -32,9 +32,8 @@ class Trainer:
 	var wish_poke
 	var imprisoned_poke
 	var has_moved
-#endregion
 	
-	func _init(_name: String, _poke_list: Array, _selection: Object = null):
+	func _init(_name: String, _poke_list: Array, _selection: Callable = Callable()):
 		#Crea un objeto Trainer que requiere un nombre, un equipo de Pokémon y una función opcional de selección.
 		#- name: Nombre del entrenador
 		#- poke_list: Lista de Pokémon del entrenador
@@ -58,9 +57,9 @@ class Trainer:
 			push_error("Intento de crear un entrenador sin nombre.")
 			return
 		
-		if _selection and not call(selection):
-			push_error("Intento de crear un entrenador con una función de selección inválida.")
-			return
+		#if _selection and not call(selection):
+			#push_error("Intento de crear un entrenador con una función de selección inválida.")
+			#return
 		
 		poke_list = _poke_list
 		for poke in self.poke_list:
@@ -69,8 +68,8 @@ class Trainer:
 			else:
 				push_error("Attempted to create Trainer with duplicate Pokemon")
 
-		self.selection = selection
-
+		self.selection = _selection
+		self.next_poke = null
 		self.name = _name
 		self.in_battle = false
 
@@ -142,3 +141,8 @@ class Trainer:
 	func _must_be_in_battle():
 		if not self.in_battle:
 			push_error("Trainer must be in battle")
+
+	func switch_poke(n: int):
+		self.current_poke = poke_list[n]
+		poke_list[n] = poke_list[0]
+		poke_list[0] = self.current_poke

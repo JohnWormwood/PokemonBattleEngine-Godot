@@ -1,12 +1,13 @@
+extends Resource
 class_name Move
 # Importar configuraciones
 const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
 
 #region Var
 
-var md
+var move_data: Array
 var id
-var name
+@export var name: String
 var type
 var original_power
 var power
@@ -26,8 +27,10 @@ var encore_blocked
 #endregion
 
 # Constructor
-func _init(move_data: Array):
-	self.md = move_data
+func _init():
+	pass
+func set_move_data(move_data: Array):
+	self.move_data = move_data
 	self.id = move_data[gs.MOVE_ID]
 	self.name = move_data[gs.MOVE_NAME]
 	self.type = move_data[gs.MOVE_TYPE]  # Asegúrate de que esto sea una cadena de texto
@@ -43,6 +46,7 @@ func _init(move_data: Array):
 	self.ef_amount = move_data[gs.MOVE_EFFECT_AMT]
 	self.ef_stat = move_data[gs.MOVE_EFFECT_STAT]
 	self.cur_pp = self.max_pp
+	return self
 
 # Método para resetear el movimiento
 func reset():
@@ -62,7 +66,7 @@ func reset():
 
 # Método para obtener una copia del movimiento
 func get_tcopy() -> Move:
-	var copy = Move.new(self.md)
+	var copy = Move.new().set_move_data(self.move_data)
 	copy.ef_id = self.ef_id
 	copy.ef_amount = self.ef_amount
 	copy.ef_stat = self.ef_stat

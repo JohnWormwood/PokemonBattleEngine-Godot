@@ -2,23 +2,26 @@ extends Node
 
 const tr = preload("res://gdScripts/pokeSim/core/trainer.gd")
 
+var misty
+var battle
+
 func _ready():
 	PokeSim.start()
-	main()
+	run()
 
-func main():
+func run():
 	# Crear Pikachu para Ash
-	var pikachu = Pokemon.new(
-		"pikachu",
+	var pikachu = Pokemon.new().set_pokemon_data(
+		"shedinja",
 		50,
-		["thunder", "quick-attack", "iron-tail", "tackle"],
+		["dig", "scratch", "harden", "grudge"],
 		"male",
 		"jolly",
-		[120, 90, 55, 50, 50, 100]
+		[1, 90, 45, 30, 30, 40]
 	)
 
 	# Crear Starmie para Misty
-	var starmie = Pokemon.new(
+	var starmie = Pokemon.new().set_pokemon_data(
 		"starmie",
 		50,
 		["surf", "ice-beam", "psychic", "tackle"],
@@ -29,27 +32,27 @@ func main():
 
 	# Crear los entrenadores
 	var ash = tr.Trainer.new("Ash", [pikachu])
-	var misty = tr.Trainer.new("Misty", [starmie])
+	misty = tr.Trainer.new("Misty", [starmie])
 
 	# Crear la batalla
-	var battle = Battle.new(ash, misty)
+	battle = Battle.new(ash, misty)
 	battle.start()
 	
 	# Parámetros de ejemplo para el turno
-	var t1_action = ['move', 'thunder']    # Acción de Ash
+	var t1_action = ['move', 'scratch']    # Acción de Ash
 	var t2_action = ['move', 'tackle']      # Acción de Misty
 	
 	# Procesar el turno con los parámetros fijos
 	var turn_result = battle.turn(t1_action, t2_action)
 	
-	#t1_action = ['move', 'thunder']
+	#t1_action = ['move', 'harden']
 	#t2_action = ['move', 'surf'] 
 	#turn_result = battle.turn(t1_action, t2_action)
-	#
-	#t1_action = ['move', 'thunderbolt']
+	##
+	#t1_action = ['move', 'harden']
 	#t2_action = ['move', 'surf'] 
 	#turn_result = battle.turn(t1_action, t2_action)
-	#
+	##
 	#t1_action = ['move', 'thunderbolt']
 	#t2_action = ['move', 'surf'] 
 	#turn_result = battle.turn(t1_action, t2_action)

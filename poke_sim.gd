@@ -15,7 +15,7 @@ static var _abilities = {}
 static var _item_list = []
 static var _items = {}
 
-static func start():
+static func start() -> void:
 	if _pokemon_stats.size() > 0:
 		return
 
@@ -113,7 +113,13 @@ static func get_valid_name_or_id(name_or_id: Variant) -> int:
 		return p_id
 	return -1
 
-
+static  func get_rand_poke() -> Pokemon:
+	var poke = Pokemon.new()
+	poke.set_pokemon_data(randi_range(1,150),50,[get_rand_move()[1],get_rand_move()[1],get_rand_move()[1],get_rand_move()[1]],
+		get_rand_gender(),get_rand_nature(),get_rand_stats(),get_rand_ability())
+	if poke.moves.size() > 4:
+		print("out of moves ",poke.name)
+	return poke
 static func get_pokemon(name_or_id: Variant) -> Array:
 	var p_id = get_valid_name_or_id(name_or_id)
 	if p_id == -1:
@@ -160,6 +166,8 @@ static func filter_valid_types(types: Array) -> Array:
 			valid_types.append(t)  # Añade el tipo válido a la lista
 	return valid_types  # Retorna la lista con los tipos filtrados
 
+static func get_rand_move_names() -> Array:
+	return _move_list[randi_range(0, _move_list.size() - 1)]
 
 static func get_rand_move() -> Array:
 	return _move_list[randi_range(0, _move_list.size() - 1)]
@@ -177,6 +185,12 @@ static func get_rand_stats() -> Array:
 	var stats = []
 	for i in range(6):
 		stats.append(randi_range(gs.STAT_ACTUAL_MIN, gs.STAT_ACTUAL_MAX + 1))
+	return stats
+
+static func get_rand_ivs() -> Array:
+	var stats = []
+	for i in range(6):
+		stats.append(randi_range(1, 31))
 	return stats
 
 static func get_rand_gender() -> String:
