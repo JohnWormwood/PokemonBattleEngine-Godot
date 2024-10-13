@@ -2,6 +2,8 @@
 
 **PokeBattleSim-Godot** is a real-time Pokémon battle simulator developed in Godot Engine, inspired by open-source Pokémon battle simulation projects. The original project is based on [poke-battle-sim](https://github.com/hiimvincent/poke-battle-sim), and I am currently working on upgrading it using the enhanced version from [pykemon](https://github.com/thomas18F/pykemon). Thanks for checking it out!
 
+I will try to keep the engine as clean as possible since it has personal purposes and although it maintains the same use it may have unnecessary functionalities.
+
 ## Overview
 
 **PokeBattleSim-Godot** replicates the battle mechanics found in Generation IV Pokémon games (Diamond, Pearl, Platinum) and is designed to be easily expandable and customizable.
