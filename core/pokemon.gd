@@ -211,27 +211,22 @@ func set_pokemon_data(
 		return
 
 	if stats_actual:
-
 		if not (stats_actual is Array) or stats_actual.size() != gs.STAT_NUM:
 			push_error("Attempted to create Pokemon with invalid stats")
 			return
-
 		var valid_stats = true
 		for s in stats_actual:
 			if not (typeof(s) == TYPE_INT and s >= gs.STAT_ACTUAL_MIN and s < gs.STAT_ACTUAL_MAX):
 				valid_stats = false
 				break
-
 		if not valid_stats:
 			push_error("Attempted to create Pokemon with invalid stats")
 			return
-
 		self.stats_actual = stats_actual
 		self.ivs = []
 		self.evs = []
 		self.nature
 		self.nature_effect = null
-
 	else:
 		if not (ivs is Array and evs is Array and ivs.size() == gs.STAT_NUM and evs.size() == gs.STAT_NUM):
 			push_error("Attempted to create Pokemon with invalid evs or ivs")

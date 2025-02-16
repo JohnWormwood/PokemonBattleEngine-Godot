@@ -162,7 +162,7 @@ static func on_hit_abilities(
 	):
 		defender.types = [move_data.type, null]
 		battle.add_text(
-			defender.nickname + " transformed into the " + move_data.type.upper() + " type!"
+			defender.nickname + " transformed into the " + move_data.type + " type!"
 		)
 	elif (
 		defender.has_ability("wonder-guard")

@@ -115,8 +115,8 @@ static func get_valid_name_or_id(name_or_id: Variant) -> int:
 
 static  func get_rand_poke() -> Pokemon:
 	var poke = Pokemon.new()
-	poke.set_pokemon_data(randi_range(1,150),50,[get_rand_move()[1],get_rand_move()[1],get_rand_move()[1],get_rand_move()[1]],
-		get_rand_gender(),get_rand_nature(),get_rand_stats(),get_rand_ability())
+	poke.set_pokemon_data(randi_range(1,150),randi_range(5,50),get_rand_moves_name(),
+		get_rand_gender(),get_rand_nature(),[],get_rand_ability(),-1,get_rand_ivs(),[0,0,0,0,0,0])
 	if poke.moves.size() > 4:
 		print("out of moves ",poke.name)
 	return poke
@@ -166,11 +166,17 @@ static func filter_valid_types(types: Array) -> Array:
 			valid_types.append(t)  # Añade el tipo válido a la lista
 	return valid_types  # Retorna la lista con los tipos filtrados
 
-static func get_rand_move_names() -> Array:
-	return _move_list[randi_range(0, _move_list.size() - 1)]
-
 static func get_rand_move() -> Array:
 	return _move_list[randi_range(0, _move_list.size() - 1)]
+
+static func get_rand_moves_name() -> Array:
+	var moves_names = []
+	while moves_names.size() < 4:
+		var move = get_rand_move()
+		var move_name = move[1]
+		if move_name not in moves_names:
+			moves_names.append(move_name)
+	return moves_names
 
 static func get_rand_ability() -> String:
 	return _ability_list[randi_range(0, _ability_list.size() - 1)]

@@ -568,7 +568,6 @@ func _process_selection(selector: tr.Trainer, can_skip: bool = true) -> bool:
 	if selector.selection and selector.next_poke == null:
 		await selector.selection.call()
 		selector.next_poke = null
-		print("selector await finished")
 	
 	if not selector.current_poke.is_alive or selector.current_poke == old_poke:
 		for p in selector.poke_list:
