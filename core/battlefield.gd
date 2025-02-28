@@ -73,27 +73,27 @@ func process_weather_effects(poke: Pokemon):
 	if not poke.is_alive or self.weather_count >= 999:
 		return
 
-	if self.weather == gs.SANDSTORM and not self.poke.has_ability("sand-veil") and not self.poke.in_ground and not self.poke.in_water and not self.poke.types.has("ground") and not self.poke.types.has("steel") and not self.poke.types.has("rock"):
-		self.cur_battle.add_text(self.poke.nickname + " is buffeted by the Sandstorm!")
-		self.poke.take_damage(max(1, self.poke.max_hp / 16))#TODO div entero
+	if self.weather == gs.SANDSTORM and not poke.has_ability("sand-veil") and not poke.in_ground and not poke.in_water and not poke.types.has("ground") and not poke.types.has("steel") and not poke.types.has("rock"):
+		self.cur_battle.add_text(poke.nickname + " is buffeted by the Sandstorm!")
+		poke.take_damage(max(1, poke.max_hp / 16))#TODO div entero
 
-	if self.weather == gs.HAIL and not self.poke.has_ability("ice-body") and not self.poke.in_ground and not self.poke.in_water and not self.poke.types.has("ice"):
-		self.cur_battle.add_text(self.poke.nickname + " is buffeted by the Hail!")
-		self.poke.take_damage(max(1, self.poke.max_hp / 16))#TODO div entero
+	if self.weather == gs.HAIL and not poke.has_ability("ice-body") and not poke.in_ground and not poke.in_water and not poke.types.has("ice"):
+		self.cur_battle.add_text(poke.nickname + " is buffeted by the Hail!")
+		poke.take_damage(max(1, poke.max_hp / 16))#TODO div entero
 
-	if self.weather == gs.HAIL and self.poke.has_ability("ice-body"):
-		self.cur_battle.add_text(self.poke.nickname + " was healed by its Ice Body!")
+	if self.weather == gs.HAIL and poke.has_ability("ice-body"):
+		self.cur_battle.add_text(poke.nickname + " was healed by its Ice Body!")
 		var text_skip=true
-		self.poke.heal(max(1, self.poke.max_hp / 16), text_skip)#TODO div entero
+		poke.heal(max(1, poke.max_hp / 16), text_skip)#TODO div entero
 
-	if self.weather == gs.RAIN and self.poke.has_ability("dry-skin"):
-		self.cur_battle.add_text(self.poke.nickname + " was healed by its Dry Skin!")
+	if self.weather == gs.RAIN and poke.has_ability("dry-skin"):
+		self.cur_battle.add_text(poke.nickname + " was healed by its Dry Skin!")
 		var text_skip=true
-		self.poke.heal(max(1, self.poke.max_hp / 8), text_skip)#TODO div entero
+		poke.heal(max(1, poke.max_hp / 8), text_skip)#TODO div entero
 
-	if self.weather == gs.HARSH_SUNLIGHT and self.poke.has_ability("dry-skin"):
-		self.cur_battle.add_text(self.poke.nickname + " was hurt by its Dry Skin!")
-		self.poke.take_damage(max(1, self.poke.max_hp / 8))#TODO div entero
+	if self.weather == gs.HARSH_SUNLIGHT and poke.has_ability("dry-skin"):
+		self.cur_battle.add_text(poke.nickname + " was hurt by its Dry Skin!")
+		poke.take_damage(max(1, poke.max_hp / 8))#TODO div entero
 
 func get_terrain():
 		return self._terrain
