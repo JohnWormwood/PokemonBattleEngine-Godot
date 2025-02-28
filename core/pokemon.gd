@@ -132,7 +132,6 @@ var stats_effective
 var next_moves: Array
 var original
 var trainer
-var r_amt
 var enemy
 var move_in_a_row
 var stats_base: Array
@@ -555,7 +554,9 @@ func heal(heal_amount: int, text_skip: bool = false) -> int:
 	#- text_skip (bool): If true, skips adding text to the battle log.
 	#Returns:
 	#- int: The actual amount of HP healed.
-
+	#Change27/02/2025: r_amt removed from class var to local function
+	
+	var r_amt = 0
 	if not self.cur_battle or heal_amount <= 0:
 		return 0
 
@@ -563,7 +564,7 @@ func heal(heal_amount: int, text_skip: bool = false) -> int:
 	if self.cur_hp + heal_amount >= self.max_hp:
 		amt = self.max_hp - self.cur_hp
 		self.cur_hp = self.max_hp
-		var r_amt = amt
+		r_amt = amt
 	else:
 		self.cur_hp += heal_amount
 		self.r_amt = heal_amount
@@ -571,7 +572,7 @@ func heal(heal_amount: int, text_skip: bool = false) -> int:
 	if not text_skip:
 		self.cur_battle.add_text(self.nickname + " regained health!")
 	
-	return self.r_amt
+	return r_amt
 
 func get_move_data(move_name: String) -> Move:
 	#Retrieves the data of a specific move.
@@ -1030,3 +1031,6 @@ func restore_all_pp(amount: int):
 func _must_be_in_battle():
 	if not self.in_battle:
 		push_error("Pokemon must be in battle")
+
+func get_rand_move() -> Move:
+	return moves[randi_range(0, 3)]
