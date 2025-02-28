@@ -12,9 +12,9 @@ func _ready():
 func run():
 	# Crear Pikachu para Ash
 	var pikachu = Pokemon.new().set_pokemon_data(
-		"shedinja",
+		"pikachu",
 		50,
-		["dig", "scratch", "harden", "grudge"],
+		PokeSim.get_rand_moves_name(),
 		"male",
 		"jolly",
 		[1, 90, 45, 30, 30, 40]
@@ -24,7 +24,7 @@ func run():
 	var starmie = Pokemon.new().set_pokemon_data(
 		"starmie",
 		50,
-		["surf", "ice-beam", "psychic", "tackle"],
+		PokeSim.get_rand_moves_name(),
 		"genderless",
 		"modest",
 		[110, 75, 85, 100, 85, 115]
@@ -39,20 +39,28 @@ func run():
 	battle.start()
 	
 	# Parámetros de ejemplo para el turno
-	var t1_action = ['move', 'scratch']    # Acción de Ash
-	var t2_action = ['move', 'tackle']      # Acción de Misty
+	var t1_action = ['move', pikachu.get_rand_move().name]    # Acción de Ash
+	var t2_action = ['move', starmie.get_rand_move().name]      # Acción de Misty
 	
 	# Procesar el turno con los parámetros fijos
 	var turn_result = battle.turn(t1_action, t2_action)
-	
-	#t1_action = ['move', 'harden']
-	#t2_action = ['move', 'surf'] 
-	#turn_result = battle.turn(t1_action, t2_action)
-	##
-	#t1_action = ['move', 'harden']
-	#t2_action = ['move', 'surf'] 
-	#turn_result = battle.turn(t1_action, t2_action)
-	##
+	#
+	t1_action = ['move', pikachu.get_rand_move().name]
+	t2_action = ['move', starmie.get_rand_move().name] 
+	turn_result = battle.turn(t1_action, t2_action)
+	#
+	t1_action = ['move', pikachu.get_rand_move().name]
+	t2_action = ['move', starmie.get_rand_move().name] 
+	turn_result = battle.turn(t1_action, t2_action)
+	#
+	t1_action = ['move', pikachu.get_rand_move().name]
+	t2_action = ['move', starmie.get_rand_move().name] 
+	turn_result = battle.turn(t1_action, t2_action)
+	#
+	t1_action = ['move', pikachu.get_rand_move().name]
+	t2_action = ['move', starmie.get_rand_move().name] 
+	turn_result = battle.turn(t1_action, t2_action)
+	#
 	#t1_action = ['move', 'thunderbolt']
 	#t2_action = ['move', 'surf'] 
 	#turn_result = battle.turn(t1_action, t2_action)
