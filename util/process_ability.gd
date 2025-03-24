@@ -1,14 +1,14 @@
 extends Object
 
 # Necesitarás definir estas clases y funciones en tus archivos GDScript equivalentes
-const pk = preload("res://gdScripts/pokeSim/core/pokemon.gd")
-const bt = preload("res://gdScripts/pokeSim/core/battle.gd")
-const bf = preload("res://gdScripts/pokeSim/core/battlefield.gd")
+const pk = preload("res://scripts/pokeSim/core/pokemon.gd")
+const bt = preload("res://scripts/pokeSim/core/battle.gd")
+const bf = preload("res://scripts/pokeSim/core/battlefield.gd")
 
-const pm = preload("res://gdScripts/pokeSim/util/process_move.gd")
+const pm = preload("res://scripts/pokeSim/util/process_move.gd")
 
-const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
-const gd = preload("res://gdScripts/pokeSim/conf/global_data.gd")
+const gs = preload("res://scripts/pokeSim/conf/global_settings.gd")
+const gd = preload("res://scripts/pokeSim/conf/global_data.gd")
 
  #Función para manejar habilidades de Pokémon
 static func selection_abilities(poke: pk, battlefield: bf, battle: bt) -> void:

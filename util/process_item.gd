@@ -2,14 +2,14 @@
 
 # Importa módulos necesarios
 
-const tr = preload("res://gdScripts/pokeSim/core/trainer.gd")
-const bt = preload("res://gdScripts/pokeSim/core/battle.gd")
-const bf = preload("res://gdScripts/pokeSim/core/battlefield.gd")
+const tr = preload("res://scripts/pokeSim/core/trainer.gd")
+const bt = preload("res://scripts/pokeSim/core/battle.gd")
+const bf = preload("res://scripts/pokeSim/core/battlefield.gd")
 
-const pm = preload("res://gdScripts/pokeSim/util/process_move.gd")
+const pm = preload("res://scripts/pokeSim/util/process_move.gd")
 
-const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
-const gd = preload("res://gdScripts/pokeSim/conf/global_data.gd")
+const gs = preload("res://scripts/pokeSim/conf/global_settings.gd")
+const gd = preload("res://scripts/pokeSim/conf/global_data.gd")
 
 
 static func use_item(

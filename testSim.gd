@@ -1,6 +1,6 @@
 extends Node
 
-const tr = preload("res://gdScripts/pokeSim/core/trainer.gd")
+const tr = preload("res://scripts/pokeSim/core/trainer.gd")
 
 var misty
 var battle

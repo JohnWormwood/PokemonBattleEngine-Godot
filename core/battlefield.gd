@@ -1,10 +1,10 @@
 class_name Battlefield
 
 # Importaciones simuladas para representar las clases y constantes necesarias
-var gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd") # Simula las constantes de gs
-var bt = preload("res://gdScripts/pokeSim/core/battle.gd") # Simula la clase Battle
-var pa = preload("res://gdScripts/pokeSim/util/process_ability.gd") # Simula el manejo de habilidades
-var pk = preload("res://gdScripts/pokeSim/core/pokemon.gd") # Simula la clase Pokemon
+var gs = preload("res://scripts/pokeSim/conf/global_settings.gd") # Simula las constantes de gs
+var bt = preload("res://scripts/pokeSim/core/battle.gd") # Simula la clase Battle
+var pa = preload("res://scripts/pokeSim/util/process_ability.gd") # Simula el manejo de habilidades
+var pk = preload("res://scripts/pokeSim/core/pokemon.gd") # Simula la clase Pokemon
 
 var weather
 var _terrain

@@ -1,10 +1,10 @@
 # Importa las clases necesarias
-const pk = preload("res://gdScripts/pokeSim/core/pokemon.gd")
+const pk = preload("res://scripts/pokeSim/core/pokemon.gd")
 
-const pi = preload("res://gdScripts/pokeSim/util/process_item.gd")
+const pi = preload("res://scripts/pokeSim/util/process_item.gd")
 
-const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
-const gd = preload("res://gdScripts/pokeSim/conf/global_data.gd")
+const gs = preload("res://scripts/pokeSim/conf/global_settings.gd")
+const gd = preload("res://scripts/pokeSim/conf/global_data.gd")
 
 class Trainer:
 		# Definir las propiedades de Trainer
@@ -120,12 +120,11 @@ class Trainer:
 		self._must_be_in_battle()
 		if not item_action or typeof(item_action[gs.ACTION_TYPE]) != TYPE_STRING or item_action[gs.ACTION_TYPE] != "item":
 			return false
-		
+		print("TODO: can_use_item")
 		#if item_action.size() == 3:TODO descomentar
 			#return pi.can_use_item(self, self.cur_battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS])
 		#elif item_action.size() == 4:
 			#return pi.can_use_item(self, self.cur_battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS], item_action[gs.MOVE_TARGET_POS])
-
 		return false
 
 	func can_use_move(move_action: Array) -> bool:

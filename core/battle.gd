@@ -4,15 +4,15 @@ class_name Battle
 # Asegúrate de tener los scripts y las rutas correctamente configuradas.
 
 # Importa las clases necesarias
-const pk = preload("res://gdScripts/pokeSim/core/pokemon.gd")
-const tr = preload("res://gdScripts/pokeSim/core/trainer.gd")
+const pk = preload("res://scripts/pokeSim/core/pokemon.gd")
+const tr = preload("res://scripts/pokeSim/core/trainer.gd")
 
-const pm = preload("res://gdScripts/pokeSim/util/process_move.gd")
-const pa = preload("res://gdScripts/pokeSim/util/process_ability.gd")
-const pi = preload("res://gdScripts/pokeSim/util/process_item.gd")
+const pm = preload("res://scripts/pokeSim/util/process_move.gd")
+const pa = preload("res://scripts/pokeSim/util/process_ability.gd")
+const pi = preload("res://scripts/pokeSim/util/process_item.gd")
 
-const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
-const gd = preload("res://gdScripts/pokeSim/conf/global_data.gd")
+const gs = preload("res://scripts/pokeSim/conf/global_settings.gd")
+const gd = preload("res://scripts/pokeSim/conf/global_data.gd")
 
 #TODO optimizar var
 

@@ -1,6 +1,6 @@
 class_name PokeSim
 
-const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
+const gs = preload("res://scripts/pokeSim/conf/global_settings.gd")
 
 static var _pokemon_stats = []
 static var _name_to_id = {}
@@ -19,7 +19,7 @@ static func start() -> void:
 	if _pokemon_stats.size() > 0:
 		return
 
-	var file = FileAccess.open("res://gdScripts/pokeSim/data/pokemon_stats.csv", FileAccess.READ)
+	var file = FileAccess.open("res://scripts/pokeSim/data/pokemon_stats.csv", FileAccess.READ)
 	if file:
 		file.get_line()  # Salta la cabecera
 		while not file.eof_reached():
@@ -36,7 +36,7 @@ static func start() -> void:
 			_name_to_id[row[1]] = row[0]  # Asigna el nombre como clave y el ID como valor
 		file.close()
 
-	file = FileAccess.open("res://gdScripts/pokeSim/data/natures.csv", FileAccess.READ)
+	file = FileAccess.open("res://scripts/pokeSim/data/natures.csv", FileAccess.READ)
 	if file:
 		file.get_line()
 		while not file.eof_reached():
@@ -45,7 +45,7 @@ static func start() -> void:
 			_nature_list.append(row[0])
 		file.close()
 
-	file = FileAccess.open("res://gdScripts/pokeSim/data/move_list.csv", FileAccess.READ)
+	file = FileAccess.open("res://scripts/pokeSim/data/move_list.csv", FileAccess.READ)
 	if file:
 		file.get_line()
 		while not file.eof_reached():
@@ -64,7 +64,7 @@ static func start() -> void:
 	else:
 		print("error move file")
 
-	file = FileAccess.open("res://gdScripts/pokeSim/data/type_effectiveness.csv", FileAccess.READ)
+	file = FileAccess.open("res://scripts/pokeSim/data/type_effectiveness.csv", FileAccess.READ)
 	if file:
 		file.get_line()
 		var line_count = 0
@@ -79,7 +79,7 @@ static func start() -> void:
 			line_count += 1
 		file.close()
 
-	file = FileAccess.open("res://gdScripts/pokeSim/data/abilities.csv", FileAccess.READ)
+	file = FileAccess.open("res://scripts/pokeSim/data/abilities.csv", FileAccess.READ)
 	if file:
 		file.get_line()
 		var temp
@@ -89,7 +89,7 @@ static func start() -> void:
 			_ability_list.append(row[1])
 		file.close()
 
-	file = FileAccess.open("res://gdScripts/pokeSim/data/items.csv", FileAccess.READ)
+	file = FileAccess.open("res://scripts/pokeSim/data/items.csv", FileAccess.READ)
 	if file:
 		file.get_line()
 		while not file.eof_reached():

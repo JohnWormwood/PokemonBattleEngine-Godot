@@ -6,10 +6,10 @@ uid="uid://dgqg4xv8g47ul"
 
 [deps]
 
-files=["res://gdScripts/pokeSim/data/abilities.ability.translation", "res://gdScripts/pokeSim/data/abilities.gen.translation"]
+files=["res://scripts/pokeSim/data/abilities.ability.translation", "res://scripts/pokeSim/data/abilities.gen.translation"]
 
-source_file="res://gdScripts/pokeSim/data/abilities.csv"
-dest_files=["res://gdScripts/pokeSim/data/abilities.ability.translation", "res://gdScripts/pokeSim/data/abilities.gen.translation"]
+source_file="res://scripts/pokeSim/data/abilities.csv"
+dest_files=["res://scripts/pokeSim/data/abilities.ability.translation", "res://scripts/pokeSim/data/abilities.gen.translation"]
 
 [params]
 

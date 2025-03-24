@@ -6,10 +6,10 @@ uid="uid://coqr0cpxpptrb"
 
 [deps]
 
-files=["res://gdScripts/pokeSim/data/natures.increase.translation", "res://gdScripts/pokeSim/data/natures.decrease.translation"]
+files=["res://scripts/pokeSim/data/natures.increase.translation", "res://scripts/pokeSim/data/natures.decrease.translation"]
 
-source_file="res://gdScripts/pokeSim/data/natures.csv"
-dest_files=["res://gdScripts/pokeSim/data/natures.increase.translation", "res://gdScripts/pokeSim/data/natures.decrease.translation"]
+source_file="res://scripts/pokeSim/data/natures.csv"
+dest_files=["res://scripts/pokeSim/data/natures.increase.translation", "res://scripts/pokeSim/data/natures.decrease.translation"]
 
 [params]
 

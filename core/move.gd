@@ -1,7 +1,7 @@
 extends Resource
 class_name Move
 # Importar configuraciones
-const gs = preload("res://gdScripts/pokeSim/conf/global_settings.gd")
+const gs = preload("res://scripts/pokeSim/conf/global_settings.gd")
 
 #region Var
 
