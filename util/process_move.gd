@@ -2940,7 +2940,7 @@ static func _ef_104(
 		var t = attacker.trainer
 		t.spikes = 0
 		t.toxic_spikes = 0
-		t.steel_rock = 0
+		t.stealth_rock = 0
 	return true
 
 static func _ef_105(
