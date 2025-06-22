@@ -22,7 +22,7 @@ Remember to fix any directory errors.
 
 ### Getting Started
 Setting up a battle in Godot is simple.
-Add **testSim.gd** to the start of the scene and the emulator will run with the data entered in **turn()**
+Add **test_sim.gd** to the start of the scene and the emulator will run with the data entered in **turn()**
 
 ```gdscript
 # Setting up trainers and Pokémon
