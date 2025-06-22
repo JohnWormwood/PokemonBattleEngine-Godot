@@ -34,7 +34,6 @@ const gd = preload("res://scripts/pokeSim/conf/global_data.gd")
 		- friendship: Pokemon's friendship value as an int between 0 and 255 by default
 		- nickname: Pokemon's unique nickname
 		"""
-#TODO optimizar variables
 #region Var
 var in_battle
 var cur_battle

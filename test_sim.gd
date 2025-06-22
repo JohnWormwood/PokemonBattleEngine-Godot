@@ -65,7 +65,7 @@ func run():
 	#t2_action = ['move', 'surf'] 
 	#turn_result = battle.turn(t1_action, t2_action)
 	
-#TODO parece que hay un problema con el move del t2, no se calcula en el _calculate_damage
+#BUG parece que hay un problema con el move del t2, no se calcula en el _calculate_damage o con algunos movimientos, no está claro
 
 	# Imprimir el resultado final
 	print(battle.get_all_text())
